@@ -223,7 +223,7 @@ def availability_section(av):
             rows.append([label, c["bin"], f"{c['n']:,}", f"{c['stated']:.0%}", f"{c['happened']:.0%}"])
     md += ["### Does \"30% chance\" happen 30% of the time? (empty, 3 h)", "",
            table(rows, ["Forecaster", "Stated", "Windows", "Mean stated", "Happened"]), "",
-           "The direct reading is far too sure: when it says 90%, the station is empty about 20% of the time. "
+           "The direct reading is far too sure: when it says 90% or more, the station is empty about 20% of the time. "
            "Its band was built for trip-based net flow, and trucks refill stations that trips alone would empty "
            "(see below). The calibrated version is honest but rarely says more than 30%.", ""]
     rows = []

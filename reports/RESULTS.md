@@ -386,7 +386,7 @@ The calibrated version was fitted only on stations that were not already empty o
 | Calibrated | 0.4-0.5 | 15 | 43% | 20% |
 | Calibrated | 0.5-0.6 | 4 | 51% | 25% |
 
-The direct reading is far too sure: when it says 90%, the station is empty about 20% of the time. Its band was built for trip-based net flow, and trucks refill stations that trips alone would empty (see below). The calibrated version is honest but rarely says more than 30%.
+The direct reading is far too sure: when it says 90% or more, the station is empty about 20% of the time. Its band was built for trip-based net flow, and trucks refill stations that trips alone would empty (see below). The calibrated version is honest but rarely says more than 30%.
 
 ### The truck effect, measured
 

@@ -8,6 +8,13 @@ This is a **backtest, not a live service**: the model learns from summers 2022 a
 
 ![The map: blue stations gain bikes, red stations lose them](docs/map-overview.png)
 
+## In short
+
+- **The model:** gradient-boosted trees forecast net bikes (arrivals minus departures) at 100 stations, 1, 3 and 6 hours ahead, with an 80% range, tested only on summers it never saw.
+- **How good:** a plain 4-week average is a hard baseline. The model ties it at 1 hour and beats it by 4% at 3 hours and 8% at 6 hours (average miss on the 10% biggest windows).
+- **The decision finding:** for choosing which 10 stations a truck should check, ranking by forecast size is no better than random (9% against 10% really empty or full 3 hours later). Bikes at the station right now find 20%, and adding the forecast 21%. Confirmed on a sealed month.
+- **The catch:** the forecast tracks trips, not stock. Trucks move bikes without leaving trips, so against the real change in bikes it is much weaker (exploratory).
+
 ## Why it matters
 
 A station never closes. It lets riders down in one of two ways: you walk to it and there is no bike, or you arrive by bike and there is no free dock, so you ride on to another station. Operators fix this by moving bikes with trucks, and there are always more stations in trouble than trucks: BIXI's dispatchers set each station's acceptable range by hand and pick which stations to serve mostly by location ([Silva, Aloise and Jena, Omega 2024](https://doi.org/10.1016/j.omega.2024.103141), describing the 2019 and 2020 seasons). The question this project answers is the one in the middle of that process: where is the imbalance coming, and which stations should be checked first?
@@ -39,7 +46,7 @@ A plain 4-week average of the same time slot is a hard baseline; the model beats
 
 **2. As a shortlist of big moves.** At each 3-hour decision time, 43% of Level 2's top 10 stations really had a big net flow, against 41% for the 4-week average and 11% for 10 random picks from the same stations: a 2-point edge (1.7 to 2.3), the same in each year.
 
-**3. Will a station run empty or full?** Scored on real station counts from summer 2025 (past snapshots of BIXI's station feed kept by a public archive). For stations not already empty, the forecast's chance of being empty 3 hours later beats a baseline that only knows how many bikes are there now by 1.1% of the Brier score (0.3% to 1.7%); for full, by 1.7%. Rerun once on a sealed month, September 2024, with nothing refitted, it holds: +3.6% for empty and +1.7% for full. Read straight from the model's range, the chance is far too sure (when it says 90%, the station is empty about 20% of the time) because of the **truck effect**: over 3 hours, the real change in bikes and the trip-based net flow correlate only 0.47.
+**3. Will a station run empty or full?** Scored on real station counts from summer 2025 (past snapshots of BIXI's station feed kept by a public archive). For stations not already empty, the forecast's chance of being empty 3 hours later beats a baseline that only knows how many bikes are there now by 1.1% of the Brier score (0.3% to 1.7%); for full, by 1.7%. Rerun once on a sealed month, September 2024, with nothing refitted, it holds: +3.6% for empty and +1.7% for full. Read straight from the model's range, the chance is far too sure (when it says 90% or more, the station is empty about 20% of the time) because of the **truck effect**: over 3 hours, the real change in bikes and the trip-based net flow correlate only 0.47.
 
 **4. Which stations should a truck check?** Share of 10 picks that really ended empty or full, 3 hours later:
 
@@ -66,7 +73,7 @@ Every table: [reports/RESULTS.md](reports/RESULTS.md). Plain-language results an
 - **Hard baselines.** Predict zero, persistence, last week, a 4-week average and a lookup table, all scored the same way.
 - **Error bars.** 95% intervals from resampling whole days; "better" only when the paired interval excludes zero.
 - **Questions written down first** for the decision, empty/full and model studies, and results reported whichever way they came out.
-- **A sealed confirmation.** The station-count results were rerun once on September 2024, a month kept aside, under a plan written before it was downloaded. Both pre-registered tests held.
+- **A sealed confirmation.** The station-count results were rerun once on September 2024, a month kept aside, under a plan written before it was downloaded. Both tests, set in advance, held.
 
 ## Limits
 
@@ -105,7 +112,7 @@ A hidden **live view** (add `#live` to the map's address) shows bikes and free d
 
 | Path | What it does |
 |---|---|
-| `src/` | The pipeline, one numbered script per step: `s01` trips to `s07` map files, with `s05d` (shortlist), `s05e` (empty/full), `s05f` (model study), `s05g` (which stations to check) and `s05h` (sealed confirmation) and `s05i` (forecast against the real change in bikes); plus `models.py`, `availability.py`, `scoring.py`, `ranking.py`, `bootstrap.py`, `config.py`. `src/archive/` turns the past-snapshot archive into a table; `src/live/` holds the live-feed logger |
+| `src/` | The pipeline, one numbered script per step: `s01` trips to `s07` map files, with `s05d` (shortlist), `s05e` (empty/full), `s05f` (model study), `s05g` (which stations to check), `s05h` (sealed confirmation) and `s05i` (forecast against the real change in bikes); plus `models.py`, `availability.py`, `scoring.py`, `ranking.py`, `bootstrap.py`, `config.py`. `src/archive/` turns the past-snapshot archive into a table; `src/live/` holds the live-feed logger |
 | `tests/` | Scoring, ranking, bootstrap, probabilities, station matching, the self-correcting band, and no-leakage tests, checked by hand where possible |
 | `web/` | The map (`index.html`) and the method page (`method.html`), both static; they read only `web/data/*.json` |
 | `reports/` | Generated results and the numbers behind every claim |
