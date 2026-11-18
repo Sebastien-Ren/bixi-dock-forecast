@@ -1,4 +1,4 @@
-# Montreal BIXI net flow forecast
+# BIXI dock forecast
 
 Which BIXI stations will fill up, and which will run empty, over the next 1, 3 and 6 hours, and which ones should a truck check first? This project forecasts **net bikes** (arrivals minus departures) at Montreal's 100 busiest stations, gives a range for how sure it is, tests itself on three summers it never saw, and then checks the forecast against real station counts.
 
