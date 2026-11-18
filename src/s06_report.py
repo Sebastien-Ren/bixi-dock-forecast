@@ -170,7 +170,7 @@ def availability_section(av):
           f"summer 2025. {av['matched_stations']} of {av['of_stations']} stations match. "
           "**This is a retrospective test on past data, not a prospective one.** Level 2 never trained on 2025. "
           "Questions, baselines and the rule for \"better\" were fixed before any result was seen "
-          "(plan/05-empty-full-probability.md).", "",
+          "(dated plan notes).", "",
           "- **Empty**: zero bikes while the station is renting. **Full**: zero free docks while it takes returns. "
           "Measured at the snapshot nearest the end of the window (within 10 minutes).",
           "- **Headline population**: stations that are not already empty (or full) at the start.",
@@ -258,7 +258,7 @@ def decision_study_section(ds):
     md = ["## 13. Which stations should a truck go to?", "",
           f"At each decision time, three rankings pick {ds['k']} stations, scored on real station counts (August and September "
           "2025, as in section 12). A pick counts if the station really is empty or full at the end of the window. "
-          "Fixed before results (plan/06). **Forecast size** is what the map's shortlist does; **stock only** picks the "
+          "Fixed before results. **Forecast size** is what the map's shortlist does; **stock only** picks the "
           "stations closest to empty or full right now; **stock + forecast** uses the chance of ending empty or full "
           "(section 12's method, recalibrated on May to July). BIXI's own rule is not scored: these counts already include "
           "what its trucks did under that rule. **Random** picks from the same candidates (the busiest 100 stations in service at "
@@ -286,7 +286,7 @@ def model_study_section(ms):
           "Each row refits the forecast model with one change and scores it like section 1 (average miss on big windows, "
           "2024 to 2026) against the current Level 2, with 95% day-block intervals on the paired difference. "
           f"Neighbours are stations within {ms['neighbour_m']} m (median {ms['median_neighbours']} per station). "
-          "**Two flows** forecasts arrivals and departures separately (Poisson loss) and subtracts. Fixed before results (plan/06).", ""]
+          "**Two flows** forecasts arrivals and departures separately (Poisson loss) and subtracts. Fixed before results.", ""]
     rows = []
     for h, r in ms["horizons"].items():
         for name, v in list(r["ablation"].items()):
@@ -306,7 +306,7 @@ def confirmation_section(cf, av, ds):
     md = ["## 15. Sealed confirmation: September 2024", "",
           "Sections 12 and 13 were built and read on summer 2025. Here both are rerun, unchanged and **once**, on a month "
           "nobody had looked at: September 2024, under a plan written before its snapshots were downloaded "
-          "(plan/07-sealed-confirmation-sept-2024.md). Nothing is fitted on it: the starting-count table and the "
+          "(planned and sealed in advance). Nothing is fitted on it: the starting-count table and the "
           "recalibrations are the ones fitted on May to July 2025. Level 2 never trained on 2024. "
           f"{cov['matched_stations']} of {cov['of_stations']} stations match; {cov['snapshots']:,} snapshots on "
           f"{cov['days_with_windows']} days; {cov['with_both_snapshots']:,} forecast windows with a count at both ends.", "",

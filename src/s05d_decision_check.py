@@ -1,6 +1,6 @@
 """Step 5d. Score the forecast as a decision: of the K stations it says to look at, how many were really big?
 
-The questions, metric, K values and the rule for "beats" were fixed in advance (plan/01-decision-metric.md).
+The questions, metric, K values and the rule for "beats" were fixed in advance, in dated plan notes.
 Reads  data/processed/predictions.parquet, the 2022-2023 rows of panel.parquet (for the "usual suspects"
        ranking) and data/interim/station_capacity.csv (for the exploratory dock-share view).
 Writes reports/decision_check.json. It never changes a forecast.

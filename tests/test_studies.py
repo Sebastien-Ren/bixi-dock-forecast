@@ -1,4 +1,4 @@
-"""Checks for the decision study and the model study (plan/06)."""
+"""Checks for the decision study and the model study (dated plan notes)."""
 import numpy as np
 import pandas as pd
 

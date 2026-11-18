@@ -297,7 +297,7 @@ Direction is almost never the hard part: stations that are big at a given hour o
 
 ## 12. Will the station be empty or full?
 
-Net flow is not stock. Here the forecast is scored on real station counts: past snapshots of BIXI's station feed, saved about every 15 minutes by a public archive (Max Halford's bike-sharing-history), for summer 2025. 91 of 100 stations match. **This is a retrospective test on past data, not a prospective one.** Level 2 never trained on 2025. Questions, baselines and the rule for "better" were fixed before any result was seen (plan/05-empty-full-probability.md).
+Net flow is not stock. Here the forecast is scored on real station counts: past snapshots of BIXI's station feed, saved about every 15 minutes by a public archive (Max Halford's bike-sharing-history), for summer 2025. 91 of 100 stations match. **This is a retrospective test on past data, not a prospective one.** Level 2 never trained on 2025. Questions, baselines and the rule for "better" were fixed before any result was seen (dated plan notes).
 
 - **Empty**: zero bikes while the station is renting. **Full**: zero free docks while it takes returns. Measured at the snapshot nearest the end of the window (within 10 minutes).
 - **Headline population**: stations that are not already empty (or full) at the start.
@@ -410,7 +410,7 @@ Real change in bikes at the station (available plus disabled) against the trip-b
 
 ## 13. Which stations should a truck go to?
 
-At each decision time, three rankings pick 10 stations, scored on real station counts (August and September 2025, as in section 12). A pick counts if the station really is empty or full at the end of the window. Fixed before results (plan/06). **Forecast size** is what the map's shortlist does; **stock only** picks the stations closest to empty or full right now; **stock + forecast** uses the chance of ending empty or full (section 12's method, recalibrated on May to July). BIXI's own rule is not scored: these counts already include what its trucks did under that rule. **Random** picks from the same candidates (the busiest 100 stations in service at both ends of the window, median 82), not the whole network.
+At each decision time, three rankings pick 10 stations, scored on real station counts (August and September 2025, as in section 12). A pick counts if the station really is empty or full at the end of the window. Fixed before results. **Forecast size** is what the map's shortlist does; **stock only** picks the stations closest to empty or full right now; **stock + forecast** uses the chance of ending empty or full (section 12's method, recalibrated on May to July). BIXI's own rule is not scored: these counts already include what its trucks did under that rule. **Random** picks from the same candidates (the busiest 100 stations in service at both ends of the window, median 82), not the whole network.
 
 | Horizon | Decision times | Share of candidates that end up a problem | Forecast size | Stock only | Stock + forecast | Random | Stock + forecast minus stock only |
 |---|---|---|---|---|---|---|---|
@@ -435,7 +435,7 @@ Share of the picks that really were empty or full, with 95% day-block intervals.
 
 ## 14. What does the model need?
 
-Each row refits the forecast model with one change and scores it like section 1 (average miss on big windows, 2024 to 2026) against the current Level 2, with 95% day-block intervals on the paired difference. Neighbours are stations within 600 m (median 4 per station). **Two flows** forecasts arrivals and departures separately (Poisson loss) and subtracts. Fixed before results (plan/06).
+Each row refits the forecast model with one change and scores it like section 1 (average miss on big windows, 2024 to 2026) against the current Level 2, with 95% day-block intervals on the paired difference. Neighbours are stations within 600 m (median 4 per station). **Two flows** forecasts arrivals and departures separately (Poisson loss) and subtracts. Fixed before results.
 
 | Horizon | Change | Miss on big windows | Change in miss vs Level 2 | Verdict |
 |---|---|---|---|---|
@@ -462,7 +462,7 @@ Level 2's own miss: 1 h 9.41; 3 h 13.91; 6 h 18.50. A positive change means the 
 
 ## 15. Sealed confirmation: September 2024
 
-Sections 12 and 13 were built and read on summer 2025. Here both are rerun, unchanged and **once**, on a month nobody had looked at: September 2024, under a plan written before its snapshots were downloaded (plan/07-sealed-confirmation-sept-2024.md). Nothing is fitted on it: the starting-count table and the recalibrations are the ones fitted on May to July 2025. Level 2 never trained on 2024. 88 of 100 stations match; 2,691 snapshots on 30 days; 146,822 forecast windows with a count at both ends.
+Sections 12 and 13 were built and read on summer 2025. Here both are rerun, unchanged and **once**, on a month nobody had looked at: September 2024, under a plan written before its snapshots were downloaded (planned and sealed in advance). Nothing is fitted on it: the starting-count table and the recalibrations are the ones fitted on May to July 2025. Level 2 never trained on 2024. 88 of 100 stations match; 2,691 snapshots on 30 days; 146,822 forecast windows with a count at both ends.
 
 Written down before the run: confirmed if, at 3 h, (1) stock + forecast and stock only are both clearly above forecast size, and (2) the calibrated chance is not worse than the starting-count rate, for empty and for full.
 

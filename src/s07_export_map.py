@@ -100,7 +100,7 @@ def findings(metrics, preds=None):
             "range_trips": iv(v["range_held_trips"]), "range_real": iv(v["range_held_real"]),
             "big_cutoff": r(v["big_cutoff"], 0)} for h, v in rc["horizons"].items()}}
     cf = metrics.get("confirmation")
-    if cf:              # the sealed one-time rerun on September 2024 (plan/07)
+    if cf:              # the sealed one-time rerun on September 2024
         out["confirmation"] = {
             "month": cf["confirmation_month"], "confirmed": cf["verdict"]["confirmed"],
             "matched": cf["coverage"]["matched_stations"], "days": cf["coverage"]["days_with_windows"],
@@ -117,7 +117,7 @@ def findings(metrics, preds=None):
     return out
 
 
-STOCK_WEEK = "2025-08-04"      # a Monday in the empty/full test months with good snapshot coverage (plan/06)
+STOCK_WEEK = "2025-08-04"      # a Monday in the empty/full test months with good snapshot coverage
 
 
 def running_examples(p, top):

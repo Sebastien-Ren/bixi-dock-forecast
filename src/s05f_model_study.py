@@ -1,4 +1,4 @@
-"""Step 5f. What does the model need, and does an obvious alternative do better? (plan/06, part B)
+"""Step 5f. What does the model need, and does an obvious alternative do better? (questions fixed before results)
 
 Three small experiments, each scored exactly like the main result (average miss on big windows, 2024 to 2026,
 never retrained) against the current Level 2, with day-block paired intervals:

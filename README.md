@@ -25,7 +25,7 @@ A station never closes. It lets riders down in one of two ways: you walk to it a
 
 ## Results
 
-All tests are forward: the model learns from summers 2022 and 2023 only and is scored on summers 2024 to 2026 with the weather forecasts that existed at the time. Questions for the later checks were written down before their results were seen (dated plans).
+All tests are forward: the model learns from summers 2022 and 2023 only and is scored on summers 2024 to 2026 with the weather forecasts that existed at the time. Questions for the later checks were written down before their results were seen (dated plan notes, not published; the sealed month's plan was written before its data was downloaded).
 
 **1. Accuracy.** Average miss in bikes on the 10% of windows with the biggest change (879,339 station-hours per look-ahead):
 

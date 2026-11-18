@@ -1,4 +1,4 @@
-"""Checks for the sealed confirmation (plan/07): it only applies parts fitted on May to July 2025."""
+"""Checks for the sealed confirmation (sealed plan): it only applies parts fitted on May to July 2025."""
 import numpy as np
 import pandas as pd
 import pytest

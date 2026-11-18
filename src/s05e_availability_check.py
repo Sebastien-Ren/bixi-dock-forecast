@@ -1,7 +1,7 @@
 """Step 5e. Will a station be empty or full? Scored on real station counts from summer 2025.
 
 The questions, populations, forecasters, baselines and the rule for "beats" were fixed before any result was
-seen (plan/05-empty-full-probability.md). This is a retrospective test on past data, not a prospective one.
+seen (dated plan notes). This is a retrospective test on past data, not a prospective one.
 
 Reads  data/interim/inventory_2025-*.parquet (past snapshots of BIXI's station feed, from
        src/archive/build_inventory.py), data/processed/predictions.parquet (Level 2, never trained on 2025),

@@ -1,4 +1,4 @@
-"""Checks for the empty/full probability step (plan/05-empty-full-probability.md)."""
+"""Checks for the empty/full probability step (dated plan notes)."""
 import numpy as np
 import pandas as pd
 

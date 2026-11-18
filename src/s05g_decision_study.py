@@ -1,4 +1,4 @@
-"""Step 5g. Which 10 stations should a dispatcher check? Three rankings scored on real station counts (plan/06, part A).
+"""Step 5g. Which 10 stations should a dispatcher check? Three rankings scored on real station counts (questions fixed before results).
 
   forecast size    largest |Level 2 forecast| (what the map's shortlist does now)
   stock only       closest to empty or full right now (no forecast)
@@ -7,7 +7,7 @@ A pick counts if the station really is empty or full at the end of the window. S
 May to July, tested on August and September. Writes reports/decision_study.json.
 
 BIXI's own rule is not scored: these counts already include what BIXI's trucks did under that rule, so the
-stations it served look fixed. See plan/06.
+stations it served look fixed. See the report, section 13.
 """
 import json
 

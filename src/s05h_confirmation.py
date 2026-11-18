@@ -1,4 +1,4 @@
-"""Step 5h. A sealed confirmation on September 2024 (plan/07-sealed-confirmation-sept-2024.md).
+"""Step 5h. A sealed confirmation on September 2024 (planned and sealed before its data was downloaded).
 
 The empty/full test (s05e) and the "which stations to check" test (s05g) were built and read on summer 2025.
 This reruns both, unchanged, on a month nobody had looked at: September 2024. Level 2 was never trained on 2024.
@@ -78,7 +78,7 @@ def score_confirmation(d, fits):
 
 
 def judge(res, h=HEADLINE_H):
-    """The two tests written down in plan/07 before the data was seen."""
+    """The two tests written down in the plan before the data was seen."""
     dec = res["decision"][str(h)]["paired"]
     order = {k: dec[k]["verdict"] for k in ("both_vs_size", "stock_vs_size")}
     skill = {ev: res["empty_full"][ev]["horizons"][str(h)]["headline"]["paired"]["p_cal_vs_p_rate"]["verdict"]
@@ -101,7 +101,7 @@ def main(argv=None):
         return 0
     if not args.coverage and OUT.exists():
         print(f"{OUT.relative_to(OUT.parents[1])} exists: the sealed confirmation has already been run once. "
-              "Delete it only if plan/07 says why.")
+              "Delete it only with a written reason.")
         return 0
 
     states24, match24 = chk.load_states(frames24)

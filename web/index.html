@@ -724,7 +724,7 @@ function showTip({ index, x, y }) {
 
 const TOP_K = 10;
 function drawActStock() {
-  // A week with real station counts: rank by the chance of being empty or full at the end (stock + forecast, plan/06).
+  // A week with real station counts: rank by the chance of being empty or full at the end (stock + forecast).
   const hr = state.hour, fc = F();
   const rows = [];
   fc.chance[hr].forEach((c, si) => { if (c != null) rows.push({ si, c }); });
@@ -1166,7 +1166,7 @@ window.bixi.state = state;
 })();
 buildDays();
 drawAll();
-// Live mode is hidden until a live forecast exists to sit beside it (plan/03-system-design.md, stage 3).
+// Live mode is hidden until a live forecast exists to sit beside it.
 // Open the page with #live to use it.
 if (LIVE_MAP && location.hash === "#live") {
   $("mode-section").hidden = false;
