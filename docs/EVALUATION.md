@@ -99,7 +99,7 @@ Seasonal memory carries the model. Neighbours add almost nothing and two flows a
 ## Limits to keep in mind
 
 - Net flow here is built from trips. Trucks moving bikes and bikes pulled for repair are not trips, so this is not the real change in docked bikes. Measured on summer 2025, the two correlate only about 0.47 (see above).
-- Only the 100 busiest stations are forecast and scored. Every comparison, random picks included, is within them; quieter stations were not tested.
+- Only the 100 busiest stations are forecast and scored. Every comparison, random picks included, is within them. In summer 2025 they carried 25% of trips, 20% of all net flow and 37% of the big 3-hour moves (18+ bikes), but only about 9% of empty-station time and 7% of full-station time (August and September 2025 counts): busy and quiet stations are empty about equally often, and there are ten times more quiet ones. At the other ~800 stations the median 3-hour window moves 2 bikes and 62% move 2 or fewer, so a forecast adds little there; a network-wide dispatch list would lean on the stock count, which is what the truck-ranking study found.
 - The network changes. Of the 100 stations ranked on 2022 and 2023, 94 were in service in summer 2024, 91 in 2025 and 85 in 2026. Stations that closed or moved more than a block get no forecast.
 - The map shows the never-retrained model. The retrained copy is scored on the method page (results section) but does not draw the circles.
 - The trip-based backtest (2024 to 2026) has no sealed set of dates: it was read once and nothing was tuned afterwards. The checks on real station counts were confirmed on a sealed month, September 2024, run once under a plan written before its data was downloaded.

@@ -66,7 +66,7 @@ Every table: [reports/RESULTS.md](reports/RESULTS.md). Plain-language results an
 
 ## Limits
 
-- **Only the 100 busiest stations.** Every result, including the comparisons with random picks, is measured within them. Quieter stations were not tested and may behave differently (sparser, noisier traffic).
+- **Only the 100 busiest stations.** Every result, including the comparisons with random picks, is measured within them. In summer 2025 they carried 25% of trips and 37% of the big 3-hour moves, but only about 9% of the time a station sat empty (7% for full), because most empty stations are quiet ones. A forecast is worth most where flow is big: at the other ~800 stations most 3-hour windows move 2 bikes or fewer. A network-wide dispatch list would lean on the stock count, which is what result 4 found.
 - Trips do not record trucks moving bikes, so trip net flow is not the real change in stock.
 - The edges over simple rules are real but small.
 - No event calendar: the largest misses are rare extreme hours.
