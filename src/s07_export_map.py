@@ -91,6 +91,14 @@ def findings(metrics, preds=None):
                              "gap5": r(t["share_gap_5plus"], 3),
                              "by_block": {kk: [r(vv["mean_abs_gap"], 2), r(vv["mean_gap"], 2)] for kk, vv in t["by_hour_block"].items()}}
         out["availability"] = a
+    rc = metrics.get("real_change")
+    if rc:              # forecast against the real change in bikes, exploratory (s05i)
+        out["real_change"] = {"period": rc["period"], "by_h": {h: {
+            "corr_trips": iv(v["corr_forecast_trips"]), "corr_real": iv(v["corr_forecast_real"]),
+            "skill_trips": iv(v["skill_vs_zero_trips"]), "skill_real": iv(v["skill_vs_zero_real"]),
+            "skill_real_big": iv(v["skill_vs_zero_real_big"]), "direction_big": iv(v["direction_right_big_real"]),
+            "range_trips": iv(v["range_held_trips"]), "range_real": iv(v["range_held_real"]),
+            "big_cutoff": r(v["big_cutoff"], 0)} for h, v in rc["horizons"].items()}}
     cf = metrics.get("confirmation")
     if cf:              # the sealed one-time rerun on September 2024 (plan/07)
         out["confirmation"] = {

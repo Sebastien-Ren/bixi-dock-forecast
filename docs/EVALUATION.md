@@ -72,6 +72,21 @@ On the 2025 counts, at each decision time, three rankings pick 10 stations; a pi
 - **Confirmed on September 2024** (sealed, run once, nothing refitted): forecast size 7.6% / 9.1% / 13.3%, stock only 31.5% / 20.0% / 15.6%, stock + forecast 32.2% / 20.7% / 16.3%, random about 10%. The order holds at every look-ahead. The 1-hour gain of stock + forecast over stock only did not repeat: +0.7 points (-0.1 to 1.6), a tie, so the forecast's extra over the stock count is best called within the noise.
 - BIXI's rule (mostly location-based, per Silva, Aloise and Jena, Omega 2024) is not scored: the counts include what its trucks did under it. A fair comparison needs BIXI's truck logs.
 
+## Against the real change in bikes (exploratory)
+
+Everything above scores the forecast against trip net flow, which is what it was trained to predict. With the 2025 station counts the real change in bikes at a station (available plus disabled, end minus start) is also known. **Exploratory:** not written down in advance, one period (August and September 2025), the sealed month not used. 95% day-block intervals ([reports/RESULTS.md](../reports/RESULTS.md) section 16):
+
+| Look ahead | Correlation with trips | Correlation with real change | Skill vs no change, on trips | Skill vs no change, on real change | Same, on the biggest real changes | Direction right on those |
+|---|---|---|---|---|---|---|
+| 1 hour | 0.62 | 0.17 | +13.3% | -2.1% (-2.6 to -1.6) | +5.9% (+5.0 to +6.8) | 56% |
+| 3 hours | 0.82 | 0.32 | +32.5% | -11.0% (-12.3 to -9.8) | +16.6% (+14.9 to +18.3) | 68% |
+| 6 hours | 0.88 | 0.42 | +46.3% | -27.9% (-29.9 to -26.0) | +18.6% (+16.1 to +20.8) | 80% |
+
+- **The forecast follows trips closely and the real change in bikes loosely.** Over all windows it is worse than predicting no change against the real change: trucks keep stocks steadier than trips alone would.
+- **On the biggest real changes it still helps**, more at longer look-aheads. At 1 hour its direction is right only 56% of the time there.
+- **The 80% range, calibrated to trips, holds 75%, 70% and 64% of real changes** at 1, 3 and 6 hours. This is the truck effect measured on the forecast itself.
+- **It is a forecast of demand imbalance, not of stock**, and cannot be retrained on the real change: counts exist only from 2025, not for the training years.
+
 ## What the model needs
 
 Each row refits the forecast with one change (miss on big windows, 2024 to 2026, against Level 2):

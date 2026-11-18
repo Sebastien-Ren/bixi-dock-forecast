@@ -490,3 +490,21 @@ Written down before the run: confirmed if, at 3 h, (1) stock + forecast and stoc
 The direct reading is still far too sure: in its top bin (mean stated 94%) the station was empty 26% of the time (empty, 3 h). Truck effect, as in section 12: correlation between the real change in bikes and trip net flow 0.51 at 1 h, 0.53 at 3 h, 0.52 at 6 h.
 
 What did not repeat: in 2025, stock + forecast beat stock only at 1 h; on September 2024 it is a tie at every horizon. The forecast's extra over the stock count is within the noise. At 1 h the empty and full skills also swap between the two periods (each is better in one and a tie in the other), so 1 h is the least stable horizon; 3 h and 6 h hold in both.
+
+## 16. Forecast against the real change in bikes (exploratory)
+
+Every section above scores the forecast against **trip net flow**, which is what it was trained to predict. With real station counts for August and September 2025 the **real change in bikes** at a station is also known (available plus disabled, end of window minus start). Trucks move bikes without leaving a trip, so the two differ. **Exploratory:** this question was not written down in advance (it came from drawing the real change on the map's 2025 station chart), it covers one period, and the sealed month (September 2024) is not used. "Big" means the 10% of windows with the largest |real change| at each look-ahead (cut-offs 10 bikes at 1 h, 16 bikes at 3 h, 21 bikes at 6 h). "No change" is the forecast of zero. 95% day-block intervals.
+
+| Horizon | Windows | Correlation with trips | Correlation with real change | Skill vs no change, scored on trips | Skill vs no change, scored on real change | Same, on the biggest real changes | Direction right on the biggest real changes | 80% range holds, trips | 80% range holds, real change |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 h | 84,374 | 0.62 | 0.17 | +13.3% (+12.3 to +14.4) | -2.1% (-2.6 to -1.6) | +5.9% (+5.0 to +6.8) | 56% (55 to 57) | 80% (80 to 81) | 75% (75 to 76) |
+| 3 h | 80,786 | 0.82 | 0.32 | +32.5% (+30.8 to +34.0) | -11.0% (-12.3 to -9.8) | +16.6% (+14.9 to +18.3) | 68% (67 to 70) | 80% (80 to 80) | 70% (70 to 71) |
+| 6 h | 81,333 | 0.88 | 0.42 | +46.3% (+44.2 to +48.1) | -27.9% (-29.9 to -26.0) | +18.6% (+16.1 to +20.8) | 80% (79 to 82) | 80% (79 to 81) | 64% (63 to 64) |
+
+Skill = share of the "no change" forecast's average miss removed (negative means worse than no change).
+
+- The forecast follows trips closely and the real change in bikes loosely.
+- Over all windows it is **worse than predicting no change** against the real change: trucks keep stocks steadier than trips alone would, so "no change" is a strong baseline there.
+- On the biggest real changes it still helps, more at longer look-aheads, and gets the direction right 56% (1 h) to 80% (6 h) of the time.
+- The 80% range, calibrated to trips, holds fewer real changes the longer the look-ahead. This is the truck effect of section 12 measured on the forecast itself, and why the empty/full chance needed recalibrating.
+- The model is a forecast of demand imbalance, not of stock. Training on the real change is not possible: station counts exist only from 2025, not for the training years 2022 and 2023.

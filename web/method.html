@@ -242,6 +242,12 @@
   <svg id="fig-truck" viewBox="0 0 700 220" role="img" aria-label="Gap between real stock change and trip net flow by time of day"></svg>
   <figcaption id="truck-cap"></figcaption>
 </figure>
+<div id="rc-block" hidden>
+<h3>The forecast against the real change in bikes</h3>
+<p>Everything above scores the forecast against trips, which is what it was trained to predict. Where real counts exist, it can also be scored against the real change in bikes at the station. <span class="muted">Exploratory: not written down in advance, one period (August and September 2025), the sealed month not used.</span></p>
+<table id="rc-table"></table>
+<p id="rc-text"></p>
+</div>
 <p class="onmap"><b>On the map:</b> <a href="index.html#empty">"Will it empty?"</a> sums this up in three steps, with the raw and corrected chances side by side. For a dispatcher, a big predicted loss says where to look; whether that station really empties also depends on trucks the trips cannot see.</p>
 </section>
 
@@ -266,7 +272,7 @@
 <div class="label" id="limits">13/ Limits</div>
 <ul class="plain">
   <li><b>Only the 100 busiest stations.</b> Every result, including "better than random", is measured within them. In summer 2025 they carried 25% of trips and 37% of the big 3-hour moves, but only about 9% of the time a station sat empty (7% for full): most empty stations are quiet ones. A forecast is worth most where flow is big (at the other ~800 stations most 3-hour windows move 2 bikes or fewer); a network-wide dispatch list would lean on the stock count, as section 12 found.</li>
-  <li><b>Trucks are invisible in trips</b>, so trip net flow is not the real change in stock (section 11).</li>
+  <li><b>Trucks are invisible in trips</b>, so trip net flow is not the real change in stock (section 11). This is a forecast of demand imbalance, not of stock: against the real change it is much weaker than against trips.</li>
   <li><b>Small edges.</b> 1% to 8% over a 4-week average on big windows, about 2 points on the shortlist, 1% to 2.4% on empty stations.</li>
   <li><b>No event calendar.</b> The worst misses are festivals and matches.</li>
   <li><b>It ages</b> when never retrained (section 09).</li>
@@ -554,8 +560,29 @@ function drawConfirm() {
   $("conf-trk").hidden = false;
 }
 
+function drawRealChange() {
+  const R = F.real_change;
+  if (!R) return;
+  const hs = ["1", "3", "6"], B = (h) => R.by_h[h];
+  const row = (label, fn) => `<tr><td>${label}</td>${hs.map((h) => `<td class="num">${fn(B(h))}</td>`).join("")}</tr>`;
+  $("rc-table").innerHTML = `<thead><tr><th></th><th class="num">1 h</th><th class="num">3 h</th><th class="num">6 h</th></tr></thead><tbody>` + [
+    row("Correlation with trips", (v) => v.corr_trips[0].toFixed(2)),
+    row("Correlation with the real change", (v) => v.corr_real[0].toFixed(2)),
+    row("Skill vs \"no change\", scored on trips", (v) => `${sgn(v.skill_trips[0])}%`),
+    row("Skill vs \"no change\", scored on the real change", (v) => `${sgn(v.skill_real[0])}%`),
+    row("Same, on the biggest real changes (top 10%)", (v) => `${sgn(v.skill_real_big[0])}%`),
+    row("Direction right on those", (v) => pct(v.direction_big[0])),
+    row("80% range holds: trips", (v) => pct(v.range_trips[0])),
+    row("80% range holds: real change", (v) => pct(v.range_real[0])),
+  ].join("") + `</tbody>`;
+  $("rc-text").innerHTML = `The forecast follows trips closely and the real change in bikes loosely. Over all windows it does <b>worse than predicting no change</b> against the real change, because trucks keep stocks steadier than trips alone would. ` +
+    `On the biggest real changes it still helps, more the further ahead it looks, and the 80% range, built for trips, holds fewer real changes at longer look-aheads. ` +
+    `This is a forecast of demand imbalance, not of stock, and it cannot be trained on the real change: counts exist only from 2025, not for the training years.`;
+  $("rc-block").hidden = false;
+}
+
 function drawAll() {
-  drawShort(); drawExample(); drawBase(); drawModelStudy(); drawCov(); drawRetrain(); drawDec(); drawEmpty(); drawTrucks(); drawConfirm();
+  drawShort(); drawExample(); drawBase(); drawModelStudy(); drawCov(); drawRetrain(); drawDec(); drawEmpty(); drawTrucks(); drawConfirm(); drawRealChange();
 }
 
 drawPipeline(); drawTimeline(); drawImp(); drawAll();

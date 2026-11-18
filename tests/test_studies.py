@@ -47,3 +47,27 @@ def test_real_change_counts_disabled_bikes_and_is_end_minus_start():
     d = pd.DataFrame({"num_bikes_available0": [10, 3], "num_bikes_disabled0": [1, 0],
                       "num_bikes_available1": [4, 8], "num_bikes_disabled1": [2, 0]})
     assert ds.real_change(d).tolist() == [-5.0, 5.0]       # (4 + 2) - (10 + 1), and 8 - 3
+
+
+def _rc_frame(real, trips, fc, lo=None, hi=None):
+    n = len(real)
+    return pd.DataFrame({"day": ["d1"] * (n // 2) + ["d2"] * (n - n // 2), "real_change": real, "y": trips, "l2": fc,
+                         "l2_lo": fc - 1 if lo is None else lo, "l2_hi": fc + 1 if hi is None else hi})
+
+
+def test_real_change_stats_by_hand():
+    import s05i_real_change_check as rc
+    real = np.array([10.0, -10.0, 0.0, 0.0, 2.0, -2.0, 0.0, 0.0, 1.0, -1.0])
+    # a forecast equal to the real change: perfect on everything measured against real change
+    e = _rc_frame(real, real * 3, real)
+    t, _ = rc.day_table(e)
+    s = rc.derive(t.drop(columns="day").sum().values)
+    assert s["skill_vs_zero_real"] == 1.0 and abs(s["corr_forecast_real"] - 1.0) < 1e-12
+    assert s["direction_right_big_real"] == 1.0 and s["range_held_real"] == 1.0
+    # the same forecast scored against trips that are 3x bigger misses by 2|r| in total: 2 * 26 = 52 of 78
+    assert abs(s["skill_vs_zero_trips"] - (1 - 52 / 78)) < 1e-12
+    # a forecast of zero removes none of the error against real change, and the correlation is undefined (0 spread)
+    z = _rc_frame(real, real, np.zeros(10))
+    tz, _ = rc.day_table(z)
+    with np.errstate(invalid="ignore", divide="ignore"):
+        assert rc.derive(tz.drop(columns="day").sum().values)["skill_vs_zero_real"] == 0.0

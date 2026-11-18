@@ -55,6 +55,7 @@ What was decided, why, and where it lives in the code. Numbers that were measure
 | Which stations a truck should check | Rank by the chance of ending empty or full: bikes and free docks now plus the forecast | Measured on real 2025 counts: 21% of picks really ended empty or full at 3 hours, against 20% for stock alone and 9% for forecast size. |
 | Probability of empty or full | Level 2's forecast and 80% range read as a normal distribution, then a one-variable logistic recalibration fitted on May to July 2025 | The raw reading is far too sure because trips do not see trucks; recalibrated, stated chances match what happens. |
 | BIXI's own rule | Described, not scored | The real counts already include what BIXI's trucks did under that rule, so scoring it would be unfair. |
+| What is forecast | Net flow from trips, not the real change in stock | Counts exist only from 2025, so there is no real-change history for the training years 2022 and 2023. The exploratory check (section 16 of the report) shows the forecast tracks real change only loosely, so the project calls it a forecast of demand imbalance. |
 | Confirmation | September 2024, kept aside and run once with the parts fitted on May to July 2025, nothing refitted (`s05h`, plan written before the month was downloaded) | The 2025 checks had no sealed dates. A second, unseen period with a pass rule fixed in advance makes the station-count results harder to explain by luck or by tuning. Both tests held; the forecast's 1-hour gain over stock alone did not repeat. |
 
 ## Map and method page

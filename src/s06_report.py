@@ -346,6 +346,40 @@ def confirmation_section(cf, av, ds):
     return md
 
 
+def real_change_section(rc):
+    """Section 16: forecast against the real change in bikes (src/s05i_real_change_check.py). Exploratory."""
+    H = rc["horizons"]
+    md = ["## 16. Forecast against the real change in bikes (exploratory)", "",
+          "Every section above scores the forecast against **trip net flow**, which is what it was trained to predict. "
+          "With real station counts for " + rc["period"] + " the **real change in bikes** at a station is also known "
+          "(available plus disabled, end of window minus start). Trucks move bikes without leaving a trip, so the two "
+          "differ. **Exploratory:** this question was not written down in advance (it came from drawing the real change "
+          "on the map's 2025 station chart), it covers one period, and the sealed month (September 2024) is not used. "
+          "\"Big\" means the 10% of windows with the largest |real change| at each look-ahead (cut-offs "
+          + ", ".join(f"{v['big_cutoff']:.0f} bikes at {h} h" for h, v in H.items()) + "). \"No change\" is the forecast "
+          "of zero. 95% day-block intervals.", ""]
+    rows = []
+    for h, v in H.items():
+        rows.append([f"{h} h", f"{v['windows']:,}", f"{v['corr_forecast_trips'][0]:.2f}", f"{v['corr_forecast_real'][0]:.2f}",
+                     skl(v["skill_vs_zero_trips"]), skl(v["skill_vs_zero_real"]), skl(v["skill_vs_zero_real_big"]),
+                     ivp(v["direction_right_big_real"], 0), ivp(v["range_held_trips"], 0), ivp(v["range_held_real"], 0)])
+    md += [table(rows, ["Horizon", "Windows", "Correlation with trips", "Correlation with real change",
+                        "Skill vs no change, scored on trips", "Skill vs no change, scored on real change",
+                        "Same, on the biggest real changes", "Direction right on the biggest real changes",
+                        "80% range holds, trips", "80% range holds, real change"]), "",
+           "Skill = share of the \"no change\" forecast's average miss removed (negative means worse than no change).", "",
+           "- The forecast follows trips closely and the real change in bikes loosely.",
+           "- Over all windows it is **worse than predicting no change** against the real change: trucks keep stocks "
+           "steadier than trips alone would, so \"no change\" is a strong baseline there.",
+           "- On the biggest real changes it still helps, more at longer look-aheads, and gets the direction right "
+           "56% (1 h) to 80% (6 h) of the time.",
+           "- The 80% range, calibrated to trips, holds fewer real changes the longer the look-ahead. This is the truck "
+           "effect of section 12 measured on the forecast itself, and why the empty/full chance needed recalibrating.",
+           "- The model is a forecast of demand imbalance, not of stock. Training on the real change is not possible: "
+           "station counts exist only from 2025, not for the training years 2022 and 2023.", ""]
+    return md
+
+
 def main():
     p = pd.read_parquet(PROCESSED / "predictions.parquet")
     top = pd.read_csv(PROCESSED / "top_stations.csv").set_index("station_id")
@@ -558,6 +592,11 @@ def main():
         cf = json.loads(cff.read_text())
         md += confirmation_section(cf, av, dstudy)
         M["confirmation"] = cf
+    rcf = REPORTS / "real_change_check.json"
+    if rcf.exists():
+        rcc = json.loads(rcf.read_text())
+        md += real_change_section(rcc)
+        M["real_change"] = rcc
 
     M["validation"] = val
     M["retrain"] = retrain

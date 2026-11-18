@@ -54,6 +54,8 @@ Every ranking, random included, picks from the same pool: the busiest 100 statio
 
 **5. What the model needs.** Refitting with one change at a time: without seasonal memory (the same window yesterday, last week, over 4 weeks) the miss grows 11% to 35%; without calendar and place 4% to 6%; without recent activity 2% to 3%; without weather 1% to 4%. Adding neighbouring stations helps by under 0.5%, and forecasting arrivals and departures separately is no better, so the simpler model stays.
 
+**6. Against the real change in bikes (exploratory).** The forecast is scored against trips, which is what it learned. Against the real change in bikes at the station (from the station counts, August and September 2025) it follows loosely: correlation 0.17, 0.32 and 0.42 at 1, 3 and 6 hours, against 0.62, 0.82 and 0.88 for trips. Over all windows it is worse than predicting no change (-2%, -11%, -28%) because trucks keep stocks steadier than trips alone would; on the biggest real changes it still helps (+6%, +17%, +19%). This is a forecast of demand imbalance, not of stock. It was not planned in advance, covers one period, and does not use the sealed month.
+
 Every table: [reports/RESULTS.md](reports/RESULTS.md). Plain-language results and failures: [docs/EVALUATION.md](docs/EVALUATION.md).
 
 ## What makes the testing honest
@@ -69,7 +71,7 @@ Every table: [reports/RESULTS.md](reports/RESULTS.md). Plain-language results an
 ## Limits
 
 - **Only the 100 busiest stations.** Every result, including the comparisons with random picks, is measured within them. In summer 2025 they carried 25% of trips and 37% of the big 3-hour moves, but only about 9% of the time a station sat empty (7% for full), because most empty stations are quiet ones. A forecast is worth most where flow is big: at the other ~800 stations most 3-hour windows move 2 bikes or fewer. A network-wide dispatch list would lean on the stock count, which is what result 4 found.
-- Trips do not record trucks moving bikes, so trip net flow is not the real change in stock.
+- Trips do not record trucks moving bikes, so trip net flow is not the real change in stock. Against the real change the forecast is much weaker than against trips (result 6).
 - The edges over simple rules are real but small.
 - No event calendar: the largest misses are rare extreme hours.
 - Never retrained, the model drifts a little each year.
@@ -103,7 +105,7 @@ A hidden **live view** (add `#live` to the map's address) shows bikes and free d
 
 | Path | What it does |
 |---|---|
-| `src/` | The pipeline, one numbered script per step: `s01` trips to `s07` map files, with `s05d` (shortlist), `s05e` (empty/full), `s05f` (model study), `s05g` (which stations to check) and `s05h` (sealed confirmation); plus `models.py`, `availability.py`, `scoring.py`, `ranking.py`, `bootstrap.py`, `config.py`. `src/archive/` turns the past-snapshot archive into a table; `src/live/` holds the live-feed logger |
+| `src/` | The pipeline, one numbered script per step: `s01` trips to `s07` map files, with `s05d` (shortlist), `s05e` (empty/full), `s05f` (model study), `s05g` (which stations to check) and `s05h` (sealed confirmation) and `s05i` (forecast against the real change in bikes); plus `models.py`, `availability.py`, `scoring.py`, `ranking.py`, `bootstrap.py`, `config.py`. `src/archive/` turns the past-snapshot archive into a table; `src/live/` holds the live-feed logger |
 | `tests/` | Scoring, ranking, bootstrap, probabilities, station matching, the self-correcting band, and no-leakage tests, checked by hand where possible |
 | `web/` | The map (`index.html`) and the method page (`method.html`), both static; they read only `web/data/*.json` |
 | `reports/` | Generated results and the numbers behind every claim |

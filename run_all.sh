@@ -23,6 +23,7 @@ $PY src/s05f_model_study.py       # ablation, neighbours, two flows -> reports/m
 $PY src/s05g_decision_study.py    # which 10 stations to check, on real 2025 counts -> reports/decision_study.json
 $PY src/s05h_confirmation.py      # sealed one-time rerun of s05e/s05g on September 2024 -> reports/confirmation_2024_09.json
                                  # needs: $PY src/archive/build_inventory.py 2024-09-01 2024-10-01; never reruns once its file exists (plan/07)
+$PY src/s05i_real_change_check.py # exploratory: forecast against the real change in bikes (2025) -> reports/real_change_check.json
 $PY src/s06_report.py            # forecasts       -> reports/RESULTS.md and metrics.json
 $PY src/s07_export_map.py        # last week       -> web/data/forecast.json
 echo "Done. Run ./run_map.sh to open the map."
