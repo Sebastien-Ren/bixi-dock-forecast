@@ -10,15 +10,15 @@
 <link rel="stylesheet" href="vendor/maplibre-gl.css">
 <style>
   :root {
-    --paper: #f6f5f1;
-    --panel: #fbfaf7;
-    --ink: #16191d;
-    --ink-2: #4a5058;
-    --ink-3: #747a82;
-    --rule: #dddbd3;
-    --gain: #2f6fde;      /* station gains bikes */
-    --loss: #d8492b;      /* station loses bikes */
-    --neutral: #b0afaa;
+    --paper: #f7f7f5;     /* BIXI gris glace */
+    --panel: #ffffff;
+    --ink: #000000;       /* BIXI noir */
+    --ink-2: #3e3e3c;     /* BIXI gris charbon */
+    --ink-3: #6e6e6c;     /* between charbon and souris, readable as text */
+    --rule: #dcdcda;      /* BIXI gris acier */
+    --gain: #0082c8;      /* station gains bikes: BIXI bleu électrique */
+    --loss: #ee3124;      /* station loses bikes: BIXI rouge */
+    --neutral: #9c9c9b;   /* BIXI gris souris */
     --side: 372px;
     --strip: 124px;
   }
@@ -98,29 +98,35 @@
   .key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--ink-2); }
   .key span { display: inline-flex; align-items: center; gap: 6px; }
   .key i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-  .key i.hollow { border: 1.5px solid #8b8f95; width: 9px; height: 9px; }
+  .key i.hollow { border: 1.5px solid #9c9c9b; width: 9px; height: 9px; }
   .key .sz { color: var(--ink-3); }
-  .tabs { display: flex; flex-direction: column; min-height: 0; flex: 1; border-top: 1px solid var(--rule); padding-top: 14px; }
-  .tabbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: #efede7; border-radius: 10px; padding: 3px; }
+  .tabs { display: flex; flex-direction: column; border-top: 1px solid var(--rule); padding-top: 14px; }
+  .tabbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: #ededeb; border-radius: 10px; padding: 3px; }
   .tabbar button { border: 0; background: transparent; border-radius: 8px; padding: 7px 4px 8px; font-size: 13px; font-weight: 500; color: var(--ink-2); cursor: pointer; line-height: 1.2; }
   .tabbar button span { display: block; font-size: 11px; color: var(--ink-3); font-weight: 500; margin-bottom: 1px; }
-  .tabbar button[aria-selected="true"] { background: var(--panel); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(22,25,29,.12); }
-  .panels { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 2px 4px; margin: 0 -2px; }
+  .tabbar button[aria-selected="true"] { background: var(--panel); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
+  .panels { padding: 14px 2px 4px; margin: 0 -2px; }
   .panel { border-top: 0 !important; padding-top: 0 !important; }
   .linkish { all: unset; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; color: var(--ink); }
   .linkish:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-  @media (min-width: 881px) { .side { overflow: hidden; } }
+  /* Desktop: the whole sidebar scrolls as one page; the tab bar sticks to the top so tabs stay one click away. */
+  @media (min-width: 881px) {
+    /* Sticks 12px below the sidebar's top edge; the two flat shadows hide text scrolling just above and below it.
+       The 12px one above fits inside .tabs' 14px top padding, so it never covers the legend when not stuck. */
+    .tabbar { position: sticky; top: -12px; z-index: 3; box-shadow: 0 -12px 0 var(--panel), 0 10px 0 var(--panel); }
+  }
   .panel h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .panel .act-head { float: right; margin: 0 0 4px 8px; }
   .side { gap: 14px; }
   .side header h1 { font-size: 21px; margin-bottom: 6px; }
+  .side header h1::before { content: ""; display: block; width: 28px; height: 4px; border-radius: 2px; background: var(--loss); margin-bottom: 12px; }
   .clock { padding-top: 12px; }
   .howto { margin: 8px 0 0; font-size: 13px; color: var(--ink-3); }
   .method-link { display: inline-flex; align-items: center; gap: 0; margin-top: 10px; padding: 6px 12px; border: 1px solid var(--ink); border-radius: 999px;
                  font-size: 13px; font-weight: 600; color: var(--ink); text-decoration: none; }
   .method-link span { font-weight: 400; color: var(--ink-2); }
   .method-link:hover { background: var(--ink); color: var(--panel); }
-  .method-link:hover span { color: #cfd2d6; }
+  .method-link:hover span { color: #dcdcda; }
   .clock .weather { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
   .clock .weather .wx { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-2); }
   .clock .weather svg { width: 14px; height: 14px; stroke: var(--ink-3); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
@@ -132,16 +138,17 @@
   .said { display: grid; gap: 10px; margin-top: 8px; }
   .said .grp { font-size: 12.5px; color: var(--ink-3); }
   .said .row { display: grid; grid-template-columns: 62px 1fr 38px; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
-  .said .track { height: 8px; background: #efede7; border-radius: 4px; overflow: hidden; }
+  .said .track { height: 8px; background: #ededeb; border-radius: 4px; overflow: hidden; }
   .said .fill { height: 100%; border-radius: 4px; background: var(--neutral); }
   .said .fill.real { background: var(--ink); }
   .said .v { text-align: right; font-weight: 600; color: var(--ink); }
-  .weeks { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #efede7; border-radius: 10px; padding: 3px; }
+  .weeks { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #ededeb; border-radius: 10px; padding: 3px; }
   .weeks a { text-decoration: none; color: var(--ink-2); border-radius: 8px; padding: 6px 8px 7px; font-size: 13px; line-height: 1.25; }
   .weeks a small { display: block; font-size: 11.5px; color: var(--ink-3); }
-  .weeks a[aria-current="true"] { background: var(--panel); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(22,25,29,.12); }
+  .weeks a[aria-current="true"] { background: var(--panel); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.12); }
   .weeks a:hover:not([aria-current="true"]) { color: var(--ink); }
-  .act li.empty button { box-shadow: inset 3px 0 0 #2e9d63; padding-left: 9px; }
+  .weeks-note { margin: -4px 2px 0; font-size: 12.5px; line-height: 1.4; color: var(--ink-3); }
+  .act li.empty button { box-shadow: inset 3px 0 0 #00876f; padding-left: 9px; }
   .facts { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; font-size: 13.5px; color: var(--ink-2); }
   .facts b { color: var(--ink); font-weight: 600; }
   .act { border-top: 1px solid var(--rule); padding-top: 18px; }
@@ -150,7 +157,7 @@
   .act .info { all: unset; box-sizing: border-box; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--ink-3); color: var(--ink-2); font: italic 600 13px Georgia, serif; text-align: center; line-height: 19px; cursor: pointer; }
   .act .info:hover, .act .info[aria-expanded="true"] { background: var(--ink); border-color: var(--ink); color: var(--panel); }
   .act .info:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-  .act-info { background: #f0eee8; border-radius: 10px; padding: 12px 14px 4px; margin: 4px 0 12px; font-size: 13.5px; color: var(--ink-2); }
+  .act-info { background: #ededeb; border-radius: 10px; padding: 12px 14px 4px; margin: 4px 0 12px; font-size: 13.5px; color: var(--ink-2); }
   .act-info p { margin: 0 0 10px; }
   .act-info b { color: var(--ink); }
   .act-info dl { margin: 0 0 10px; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; }
@@ -166,12 +173,12 @@
   .act .nm { color: var(--ink); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .act .res { text-align: right; white-space: nowrap; color: var(--ink-2); }
   .act .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 99px; margin-left: 6px; }
-  .act .tag.yes { background: #dcefe3; color: #17613b; }
-  .act .tag.small { background: #ebeae5; color: var(--ink-3); }
-  .act .tag.wrong { background: #fbe6cf; color: #8a4a06; }
-  .act li button:hover, .act li button:focus-visible { background: #f0eee8; }
-  .act li.yes button { box-shadow: inset 3px 0 0 #2e9d63; padding-left: 9px; }
-  .act li.small button { box-shadow: inset 3px 0 0 #cfcdc5; padding-left: 9px; }
+  .act .tag.yes { background: #dcf4e7; color: #005f50; }
+  .act .tag.small { background: #ededeb; color: var(--ink-3); }
+  .act .tag.wrong { background: #ffe8da; color: #782300; }
+  .act li button:hover, .act li button:focus-visible { background: #ededeb; }
+  .act li.yes button { box-shadow: inset 3px 0 0 #00876f; padding-left: 9px; }
+  .act li.small button { box-shadow: inset 3px 0 0 #c8c8c6; padding-left: 9px; }
   .act li.wrong button { box-shadow: inset 3px 0 0 #e0902f; padding-left: 9px; }
   .act .sm { grid-column: 1 / -1; font-size: 12.5px; color: var(--ink-3); }
   .act .note { font-size: 12.5px; color: var(--ink-3); }
@@ -186,11 +193,11 @@
 
   /* ---------- map column ---------- */
   .stage { position: relative; min-width: 0; display: grid; grid-template-rows: 1fr var(--strip); }
-  #map { min-height: 0; background: #ecebe6; }
+  #map { min-height: 0; background: #ededeb; }
   .maplibregl-ctrl-attrib { font-family: inherit; font-size: 11px; }
 
   .hover-label { position: absolute; z-index: 3; pointer-events: none; background: var(--ink); color: #fff; border-radius: 8px; padding: 7px 10px; font-size: 13px; line-height: 1.35; max-width: 260px; box-shadow: 0 2px 10px rgba(0,0,0,.18); }
-  .hover-label small { display: block; color: #cfd2d6; font-size: 12px; }
+  .hover-label small { display: block; color: #dcdcda; font-size: 12px; }
   .tip {
     position: absolute; pointer-events: none; z-index: 5; display: none; max-width: 260px;
     background: var(--ink); color: #fff; padding: 8px 11px; border-radius: 6px; font-size: 13px; line-height: 1.35;
@@ -200,15 +207,15 @@
   .tip .t-sub { opacity: .78; }
 
   /* ---------- station sheet (opens in the centre) ---------- */
-  .veil { position: fixed; inset: 0; z-index: 20; background: rgba(22, 25, 29, .34); display: grid; place-items: center; padding: 20px; }
+  .veil { position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, .34); display: grid; place-items: center; padding: 20px; }
   .veil[hidden] { display: none; }
   .sheet {
     position: relative; width: min(1040px, 100%); max-height: calc(100vh - 40px); overflow-y: auto;
     background: var(--panel); border-radius: 14px; padding: 26px 30px 22px;
-    box-shadow: 0 30px 80px -20px rgba(22, 25, 29, .5);
+    box-shadow: 0 30px 80px -20px rgba(0, 0, 0, .5);
   }
   .sheet .close { position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border: 0; background: transparent; cursor: pointer; border-radius: 8px; font-size: 24px; line-height: 1; color: var(--ink-2); }
-  .sheet .close:hover { background: #eceae3; }
+  .sheet .close:hover { background: #ededeb; }
   .sheet h2 { font-size: 24px; letter-spacing: -0.02em; font-weight: 700; margin: 0 44px 2px 0; }
   .sheet .sub { font-size: 14px; color: var(--ink-3); }
   .now { display: grid; grid-template-columns: 1fr auto; gap: 18px 32px; align-items: end; margin: 18px 0 16px; }
@@ -227,7 +234,7 @@
   .chart-key span { display: inline-flex; align-items: center; gap: 7px; }
   .chart-key i { display: inline-block; flex: none; }
   .k-line { width: 20px; height: 3px; background: var(--ink); border-radius: 2px; }
-  .k-band { width: 20px; height: 11px; background: rgba(22, 25, 29, .13); border-radius: 2px; }
+  .k-band { width: 20px; height: 11px; background: rgba(0, 0, 0, .13); border-radius: 2px; }
   .k-in { width: 8px; height: 8px; border-radius: 50%; border: 1.6px solid #7a46c9; }
   .k-out { width: 9px; height: 9px; border-radius: 50%; background: #7a46c9; }
   .zoom { display: flex; gap: 6px; align-items: center; }
@@ -262,7 +269,7 @@
 
   .error { position: absolute; inset: 0; display: grid; place-items: center; padding: 32px; text-align: center; background: var(--paper); z-index: 9; }
   .error[hidden] { display: none; }
-  .error code { background: #eceae3; padding: 2px 6px; border-radius: 4px; }
+  .error code { background: #ededeb; padding: 2px 6px; border-radius: 4px; }
 
   @media (max-width: 880px) {
     html, body { height: auto; }
@@ -306,9 +313,9 @@
       </div>
       <div class="counts" id="live-counts"></div>
       <div class="legend" aria-label="How to read live mode">
-        <div class="row"><svg width="84" height="22" aria-hidden="true"><circle cx="12" cy="11" r="10" fill="#d8492b"/><circle cx="36" cy="11" r="7" fill="#e4917c"/></svg><span><b>Nearly empty.</b> Few bikes to take.</span></div>
-        <div class="row"><svg width="84" height="22" aria-hidden="true"><circle cx="12" cy="11" r="10" fill="#2f6fde"/><circle cx="36" cy="11" r="7" fill="#7fa3e4"/></svg><span><b>Nearly full.</b> Few free docks.</span></div>
-        <div class="row"><svg width="84" height="22" aria-hidden="true"><circle cx="12" cy="11" r="5" fill="none" stroke="#8b8f95" stroke-width="1.5"/></svg><span><b>Hollow:</b> offline or no live match.</span></div>
+        <div class="row"><svg width="84" height="22" aria-hidden="true"><circle cx="12" cy="11" r="10" fill="#ee3124"/><circle cx="36" cy="11" r="7" fill="#f79892"/></svg><span><b>Nearly empty.</b> Few bikes to take.</span></div>
+        <div class="row"><svg width="84" height="22" aria-hidden="true"><circle cx="12" cy="11" r="10" fill="#0082c8"/><circle cx="36" cy="11" r="7" fill="#80c1e4"/></svg><span><b>Nearly full.</b> Few free docks.</span></div>
+        <div class="row"><svg width="84" height="22" aria-hidden="true"><circle cx="12" cy="11" r="5" fill="none" stroke="#9c9c9b" stroke-width="1.5"/></svg><span><b>Hollow:</b> offline or no live match.</span></div>
         <div class="note">A bigger circle means completely empty or completely full.</div>
       </div>
       <p class="warn" id="live-warn" hidden></p>
@@ -316,6 +323,7 @@
     </section>
 
     <nav class="weeks replay-only" id="weeks" aria-label="Which week to replay"></nav>
+    <p class="weeks-note replay-only" id="weeks-note" hidden></p>
 
     <section class="clock replay-only" aria-live="polite">
       <div class="day" id="day">&nbsp;</div>
@@ -330,9 +338,9 @@
     </section>
 
     <div class="key replay-only" aria-label="How to read the map">
-      <span><i style="background:#2f6fde"></i>gains bikes</span>
-      <span><i style="background:#d8492b"></i>loses bikes</span>
-      <span><i style="background:#2f6fde;opacity:.3"></i>unsure</span>
+      <span><i style="background:#0082c8"></i>gains bikes</span>
+      <span><i style="background:#ee3124"></i>loses bikes</span>
+      <span><i style="background:#0082c8;opacity:.3"></i>unsure</span>
       <span><i class="hollow"></i>no forecast</span>
       <span class="sz">bigger circle, bigger change</span>
     </div>
@@ -387,7 +395,7 @@
       </div>
     </div>
 
-    <p class="foot">Data: BIXI Montréal, Open-Meteo / ECMWF, and Max Halford's station-feed archive. Trips do not count trucks moving bikes.</p>
+    <p class="foot">Data: BIXI Montréal, Open-Meteo / ECMWF, and Max Halford's station-feed archive. Trips do not count trucks moving bikes. Independent project, not affiliated with BIXI Montréal.</p>
   </aside>
 
   <main class="stage">
@@ -426,8 +434,8 @@
       <div class="chart-key">
         <span><i class="k-line"></i>Forecast</span>
         <span><i class="k-band"></i>Likely range (80%)</span>
-        <span><i class="k-in"></i>Happened, inside the range</span>
-        <span><i class="k-out"></i>Happened, outside the range</span>
+        <span><i class="k-in"></i>Happened (trips), inside the range</span>
+        <span><i class="k-out"></i>Happened (trips), outside the range</span>
       </div>
       <div class="zoom" role="group" aria-label="Zoom the chart">
         <button data-span="24">Day</button><button data-span="72">3 days</button><button data-span="168">Week</button>
@@ -447,7 +455,7 @@ import { Map as MapLibreMap, NavigationControl } from "./vendor/maplibre-gl.mjs"
 import { MapLibreOverlay, ScatterplotLayer } from "./vendor/deck.mjs";
 
 const $ = (id) => document.getElementById(id);
-const GAIN = [47, 111, 222], LOSS = [216, 73, 43], NEUTRAL = [176, 175, 170];
+const GAIN = [0, 130, 200], LOSS = [238, 49, 36], NEUTRAL = [156, 156, 155];   // BIXI bleu électrique, rouge, gris souris
 const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 let DATA;
@@ -550,7 +558,7 @@ function drawMap() {
       const c = colour(r);
       return state.hover == null ? c : [c[0], c[1], c[2], Math.round(c[3] * 0.3)];   // the rest fade (hue kept) while one is highlighted
     },
-    getLineColor: (s, { index }) => (reading(index) ? [251, 250, 247, state.hover == null ? 235 : 60] : [139, 143, 149, state.hover == null ? 255 : 90]),
+    getLineColor: (s, { index }) => (reading(index) ? [255, 255, 255, state.hover == null ? 235 : 60] : [156, 156, 155, state.hover == null ? 255 : 90]),
     getLineWidth: 1.5,
     updateTriggers: { getRadius: key, getFillColor: [...key, state.hover], getLineColor: [...key, state.hover] },
     transitions: { getRadius: 160, getFillColor: 160 },
@@ -562,7 +570,7 @@ function drawMap() {
     radiusUnits: "pixels", lineWidthUnits: "pixels", stroked: true, filled: false,
     getPosition: (s) => [s.lon, s.lat],
     getRadius: () => { const r = reading(state.selected); return (r ? radius(r) : 4.5) + 5; },
-    getLineColor: [22, 25, 29, 255], getLineWidth: 2,
+    getLineColor: [0, 0, 0, 255], getLineWidth: 2,
     updateTriggers: { getRadius: [...key, state.selected] },
   });
   const hov = state.hover == null ? [] : [stations[state.hover]];
@@ -577,7 +585,7 @@ function drawMap() {
   const pop = new ScatterplotLayer({
     id: "hover-pop", data: one, radiusUnits: "pixels", lineWidthUnits: "pixels", stroked: true,
     getPosition: (s) => [s.lon, s.lat], getRadius: () => radius(hr),
-    getFillColor: () => { const c = colour(hr); return [c[0], c[1], c[2], 255]; }, getLineColor: [22, 25, 29, 255], getLineWidth: 2,
+    getFillColor: () => { const c = colour(hr); return [c[0], c[1], c[2], 255]; }, getLineColor: [0, 0, 0, 255], getLineWidth: 2,
     updateTriggers: { getRadius: [...key, state.hover], getFillColor: [...key, state.hover] },
   });
   placeHoverLabel();
@@ -609,7 +617,7 @@ function drawLiveMap() {
     getPosition: (s) => [s.lon, s.lat],
     getRadius: (s, { index }) => { const r = rd(index); return !r ? 4.5 : r.bikes === 0 || r.docks === 0 ? 11 : 7.5; },
     getFillColor: (s, { index }) => { const r = rd(index); return r ? liveColour(r) : [0, 0, 0, 0]; },
-    getLineColor: (s, { index }) => { const r = rd(index); return r && r.renting ? [251, 250, 247, 235] : [139, 143, 149, 255]; },
+    getLineColor: (s, { index }) => { const r = rd(index); return r && r.renting ? [255, 255, 255, 235] : [156, 156, 155, 255]; },
     getLineWidth: 1.5,
     updateTriggers: { getRadius: live.updated, getFillColor: live.updated, getLineColor: live.updated },
     transitions: { getRadius: 200, getFillColor: 200 },
@@ -788,7 +796,7 @@ function drawAct() {
   $("act-info").innerHTML = `<p><b>What this is.</b> A dispatcher can only check a few stations. This is the model's shortlist: the 10 stations it expects to gain or lose the most bikes between ${hh(hr)} and ${hh(hr + state.h)}. Because this is a replay, we can also show what really happened and whether the shortlist was right.</p>
     <dl>
       <dt>Forecast</dt><dd>How many bikes the station is expected to gain or lose over the window, with a likely range around it.</dd>
-      <dt>Actual</dt><dd>The change that really happened over the same window: bikes arriving minus bikes leaving.</dd>
+      <dt>Actual</dt><dd>What really happened over the same window, from trips: bikes arriving minus bikes leaving. It does not include trucks moving bikes.</dd>
       <dt>Cut-off</dt><dd>${cut} bikes. A move of at least this size counts as big for this look-ahead.</dd>
       <dt>Caught</dt><dd>It really moved at least ${cut} bikes, in the direction the forecast said. A good pick.</dd>
       <dt>Wrong way</dt><dd>It moved at least ${cut} bikes, but the opposite way. Right place, wrong direction.</dd>
@@ -806,7 +814,9 @@ $("act-info-btn").onclick = () => {
 function showTab(name) {
   document.querySelectorAll(".tabbar button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
   for (const t of ["act", "score", "stock"]) $(`tab-${t}`).hidden = t !== name;
-  document.querySelector(".panels").scrollTop = 0;
+  const side = document.querySelector(".side"), tabs = document.querySelector(".tabs");      // switching tabs: start the new tab at its top
+  const off = tabs.getBoundingClientRect().top - side.getBoundingClientRect().top;
+  if (off < 0) side.scrollTop += off;
   try { localStorage.setItem("bixi-tab", name); } catch (e) { /* storage blocked */ }
 }
 document.querySelectorAll(".tabbar button").forEach((b) => (b.onclick = () => showTab(b.dataset.tab)));
@@ -914,8 +924,8 @@ function drawStrip() {
   svg.innerHTML = totals.map((v, i) => {
     const h = Math.max(1, (v / max) * (H - 4));
     const on = i === state.hour;
-    return `<rect x="${i + 0.12}" y="${H - h}" width="0.76" height="${h}" fill="${on ? "#16191d" : "#c9c7bf"}"/>`;
-  }).join("") + `<rect x="${state.hour + 0.44}" y="0" width="0.12" height="${H}" fill="#16191d"/>`;
+    return `<rect x="${i + 0.12}" y="${H - h}" width="0.76" height="${h}" fill="${on ? "#000000" : "#c8c8c6"}"/>`;
+  }).join("") + `<rect x="${state.hour + 0.44}" y="0" width="0.12" height="${H}" fill="#000000"/>`;
   $("scrub").value = state.hour;
 }
 function buildDays() {
@@ -980,7 +990,7 @@ function drawStation() {
   $("s-name").textContent = s.name;
   $("s-sub").textContent = `${fmt(new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }), wall(state.hour))}, ${hh(state.hour)}. Busiest station no. ${s.rank}` + (s.capacity ? `, ${s.capacity} docks today.` : ".");
   if (!r) {
-    $("s-dot").style.background = "transparent"; $("s-dot").style.boxShadow = "inset 0 0 0 1.5px #8b8f95";
+    $("s-dot").style.background = "transparent"; $("s-dot").style.boxShadow = "inset 0 0 0 1.5px #9c9c9b";
     $("s-verdict").textContent = "No forecast";
     $("s-range").textContent = noForecastReason(s) + ".";
     $("s-happened").textContent = "";
@@ -992,7 +1002,7 @@ function drawStation() {
     const clear = r.lo > 0 || r.hi < 0;
     $("s-range").textContent = `Likely range ${signed(r.lo)} to ${signed(r.hi)}. ${clear ? "The direction is clear." : "It could go either way."}`;
     const inside = r.actual >= r.lo && r.actual <= r.hi;
-    $("s-happened").textContent = `What happened: ${signed(r.actual)}, ${inside ? "inside" : "outside"} the range.`;
+    $("s-happened").textContent = `What happened (trip net flow): ${signed(r.actual)}, ${inside ? "inside" : "outside"} the range.`;
   }
   // One chip per look-ahead, showing this station's forecast at this hour.
   $("s-chips").innerHTML = "";
@@ -1036,11 +1046,11 @@ function drawChart(hover = null) {
   const y = (v) => T + (1 - (v + top) / (2 * top)) * (H - T - B);
   let g = `<defs><clipPath id="plot"><rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}"/></clipPath></defs>`;
   // Tinted halves, same colours as the map: blue above zero (gains), red below (loses).
-  g += `<rect x="${L}" y="${T}" width="${W - L - R}" height="${y(0) - T}" fill="rgba(47,111,222,.07)"/>`;
-  g += `<rect x="${L}" y="${y(0)}" width="${W - L - R}" height="${H - B - y(0)}" fill="rgba(216,73,43,.07)"/>`;
+  g += `<rect x="${L}" y="${T}" width="${W - L - R}" height="${y(0) - T}" fill="rgba(0,130,200,.07)"/>`;
+  g += `<rect x="${L}" y="${y(0)}" width="${W - L - R}" height="${H - B - y(0)}" fill="rgba(238,49,36,.07)"/>`;
   g += `<text x="${L + 8}" y="${T + 16}">Gains bikes</text><text x="${L + 8}" y="${H - B - 8}">Loses bikes</text>`;
   for (let v = -Math.floor(top / step) * step; v <= top; v += step) {
-    g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${v === 0 ? "#6d7178" : "rgba(22,25,29,.08)"}" stroke-width="${v === 0 ? 1.2 : 1}"/>`;
+    g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${v === 0 ? "#6e6e6c" : "rgba(0,0,0,.08)"}" stroke-width="${v === 0 ? 1.2 : 1}"/>`;
     g += `<text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)}</text>`;
   }
   // Time axis: days always, hours once zoomed in.
@@ -1048,7 +1058,7 @@ function drawChart(hover = null) {
   const dayFmt = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: view.span <= 80 ? "short" : undefined, timeZone: "UTC" });
   for (let hr = Math.ceil(view.start / tick) * tick; hr <= view.start + view.span; hr += tick) {
     const gx = xEdge(hr), midnight = hr % 24 === 0;
-    g += `<line x1="${gx}" x2="${gx}" y1="${T}" y2="${H - B}" stroke="rgba(22,25,29,${midnight ? 0.22 : 0.07})"/>`;
+    g += `<line x1="${gx}" x2="${gx}" y1="${T}" y2="${H - B}" stroke="rgba(0,0,0,${midnight ? 0.22 : 0.07})"/>`;
     if (hr >= N_HOURS) continue;
     if (midnight) g += `<text class="strong" x="${gx + 5}" y="${H - 8}">${fmt(dayFmt, wall(hr))}</text>`;
     if (tick < 24) g += `<text x="${gx + 5}" y="${H - 23}">${hh(hr)}</text>`;
@@ -1059,33 +1069,33 @@ function drawChart(hover = null) {
   if (run.length) runs.push(run);
   let plot = "";
   for (const r of runs) {
-    plot += `<path d="M${r.map((i) => `${x(i)},${y(hi[i])}`).join("L")}L${[...r].reverse().map((i) => `${x(i)},${y(lo[i])}`).join("L")}Z" fill="rgba(22,25,29,.13)"/>`;
-    plot += `<path d="M${r.map((i) => `${x(i)},${y(f[i])}`).join("L")}" fill="none" stroke="#16191d" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    plot += `<path d="M${r.map((i) => `${x(i)},${y(hi[i])}`).join("L")}L${[...r].reverse().map((i) => `${x(i)},${y(lo[i])}`).join("L")}Z" fill="rgba(0,0,0,.13)"/>`;
+    plot += `<path d="M${r.map((i) => `${x(i)},${y(f[i])}`).join("L")}" fill="none" stroke="#000000" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
   }
   const big = view.span <= 80;
   for (let i = i0; i <= i1; i++) {
     if (f[i] == null) continue;
     const out = ac[i] < lo[i] || ac[i] > hi[i];
-    plot += out ? `<circle cx="${x(i)}" cy="${y(ac[i])}" r="${big ? 4.5 : 3.2}" fill="${VIOLET}" stroke="#fbfaf7" stroke-width="1.2"/>`
-                : `<circle cx="${x(i)}" cy="${y(ac[i])}" r="${big ? 3.6 : 2.4}" fill="#fbfaf7" stroke="${VIOLET}" stroke-width="1.6"/>`;
+    plot += out ? `<circle cx="${x(i)}" cy="${y(ac[i])}" r="${big ? 4.5 : 3.2}" fill="${VIOLET}" stroke="#ffffff" stroke-width="1.2"/>`
+                : `<circle cx="${x(i)}" cy="${y(ac[i])}" r="${big ? 3.6 : 2.4}" fill="#ffffff" stroke="${VIOLET}" stroke-width="1.6"/>`;
   }
   g += `<g clip-path="url(#plot)">${plot}</g>`;
   // The hour the map is showing.
   if (state.hour + 1 > view.start && state.hour < view.start + view.span) {
     const sx = x(state.hour);
-    g += `<line x1="${sx}" x2="${sx}" y1="${T - 6}" y2="${H - B}" stroke="#16191d" stroke-width="1.5"/>`;
+    g += `<line x1="${sx}" x2="${sx}" y1="${T - 6}" y2="${H - B}" stroke="#000000" stroke-width="1.5"/>`;
     g += `<text class="strong" x="${clamp(sx, L + 40, W - R - 40)}" y="${T - 12}" text-anchor="middle">${WD[wall(state.hour).getUTCDay()]} ${hh(state.hour)}</text>`;
-    if (f[state.hour] != null) g += `<circle cx="${sx}" cy="${y(f[state.hour])}" r="5.5" fill="#16191d" stroke="#fbfaf7" stroke-width="2"/>`;
+    if (f[state.hour] != null) g += `<circle cx="${sx}" cy="${y(f[state.hour])}" r="5.5" fill="#000000" stroke="#ffffff" stroke-width="2"/>`;
   }
   const tip = $("chart-tip");
   if (hover != null && hover >= view.start - 1 && hover < view.start + view.span) {
     const hx = x(hover);
-    g += `<line x1="${hx}" x2="${hx}" y1="${T}" y2="${H - B}" stroke="#16191d" stroke-width="1" stroke-dasharray="3 4"/>`;
+    g += `<line x1="${hx}" x2="${hx}" y1="${T}" y2="${H - B}" stroke="#000000" stroke-width="1" stroke-dasharray="3 4"/>`;
     const when = `<b>${WD[wall(hover).getUTCDay()]} ${hh(hover)} to ${hh(hover + state.h)}</b>`;
     if (f[hover] == null) tip.innerHTML = `${when}<br><span class="muted">No forecast (out of service)</span>`;
     else {
       const out = ac[hover] < lo[hover] || ac[hover] > hi[hover];
-      tip.innerHTML = `${when}<br>Forecast ${signed(f[hover])} <span class="muted">(${signed(lo[hover])} to ${signed(hi[hover])})</span><br>Happened ${signed(ac[hover])} <span class="muted">${out ? "outside the range" : "inside the range"}</span>`;
+      tip.innerHTML = `${when}<br>Forecast ${signed(f[hover])} <span class="muted">(${signed(lo[hover])} to ${signed(hi[hover])})</span><br>Happened (trips) ${signed(ac[hover])} <span class="muted">${out ? "outside the range" : "inside the range"}</span>`;
     }
     tip.style.display = "block";
     const frac = hx / W, box = svg.getBoundingClientRect();
@@ -1131,6 +1141,11 @@ window.bixi.state = state;
 (function buildWeeks() {
   const nav = $("weeks"), list = DATA.weeks || [];
   if (list.length < 2) { nav.hidden = true; return; }
+  const note = $("weeks-note");
+  note.textContent = DATA.meta.has_stock
+    ? "A past week where the real number of bikes at each station is also known, so you can see which stations really ran empty or full."
+    : "The newest week. Only trips are known here, not how many bikes each station held, so it shows where bikes moved, not which stations ran empty.";
+  note.hidden = false;
   const fmtD = (iso) => { const [y, m, d] = iso.split("-").map(Number); const a = new Date(Date.UTC(y, m - 1, d)), b = new Date(Date.UTC(y, m - 1, d + 6));
     const mo = (x) => x.toLocaleString("en-GB", { month: "short", timeZone: "UTC" });
     return `${a.getUTCDate()}${mo(a) === mo(b) ? "" : " " + mo(a)} to ${b.getUTCDate()} ${mo(b)} ${b.getUTCFullYear()}`; };
