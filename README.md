@@ -4,7 +4,7 @@ Which BIXI stations will fill up, and which will run empty, over the next 1, 3 a
 
 This is a **backtest, not a live service**: the model learns from summers 2022 and 2023, and every forecast for summers 2024 to 2026 uses only what was known before that hour. The map replays the forecasts the model would have made, next to what actually happened.
 
-**Run the map locally** with `./run_map.sh` (opens <http://localhost:8765>). A hosted version is coming.
+**Open the map: <https://bixi-dock-forecast.vercel.app>** (the method page is at `/method.html`). To run it locally instead, use `./run_map.sh`, which opens <http://localhost:8765>.
 
 ![The map: blue stations gain bikes, red stations lose them](docs/map-overview.png)
 
