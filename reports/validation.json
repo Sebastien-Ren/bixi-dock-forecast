@@ -1,0 +1,40 @@
+{
+  "picked": {
+    "with_station_code": false,
+    "max_leaf_nodes": 31
+  },
+  "candidates": [
+    {
+      "with_station_code": false,
+      "max_leaf_nodes": 31,
+      "big_mae_h1": 8.7669,
+      "big_mae_h3": 13.1048,
+      "big_mae_h6": 16.9798,
+      "total": 38.8515
+    },
+    {
+      "with_station_code": false,
+      "max_leaf_nodes": 127,
+      "big_mae_h1": 8.6716,
+      "big_mae_h3": 13.047,
+      "big_mae_h6": 17.3141,
+      "total": 39.0327
+    },
+    {
+      "with_station_code": true,
+      "max_leaf_nodes": 31,
+      "big_mae_h1": 8.7497,
+      "big_mae_h3": 13.2557,
+      "big_mae_h6": 17.3146,
+      "total": 39.32
+    },
+    {
+      "with_station_code": true,
+      "max_leaf_nodes": 127,
+      "big_mae_h1": 8.6944,
+      "big_mae_h3": 13.3199,
+      "big_mae_h6": 17.6716,
+      "total": 39.6859
+    }
+  ]
+}

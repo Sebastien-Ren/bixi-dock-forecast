@@ -1,0 +1,1148 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BIXI net flow forecast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vendor/maplibre-gl.css">
+<style>
+  :root {
+    --paper: #f6f5f1;
+    --panel: #fbfaf7;
+    --ink: #16191d;
+    --ink-2: #4a5058;
+    --ink-3: #747a82;
+    --rule: #dddbd3;
+    --gain: #2f6fde;      /* station gains bikes */
+    --loss: #d8492b;      /* station loses bikes */
+    --neutral: #b0afaa;
+    --side: 372px;
+    --strip: 124px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font: 15px/1.45 "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  .app { display: grid; grid-template-columns: var(--side) 1fr; height: 100%; }
+
+  /* ---------- left column ---------- */
+  .side {
+    background: var(--panel); border-right: 1px solid var(--rule);
+    padding: 24px 26px 18px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px;
+  }
+  h1 { font-size: 23px; line-height: 1.12; letter-spacing: -0.02em; font-weight: 700; margin: 0 0 10px; }
+  .lede { color: var(--ink-2); margin: 0; font-size: 14px; }
+
+  .clock { border-top: 1px solid var(--rule); padding-top: 18px; }
+  .clock .day { font-size: 14px; color: var(--ink-2); }
+  .clock .time { font-size: 36px; line-height: 1; font-weight: 600; letter-spacing: -0.035em; margin: 2px 0 6px; }
+  .clock .window { font-size: 14px; color: var(--ink-2); }
+  .clock .weather { font-size: 13px; color: var(--ink-3); margin-top: 2px; }
+
+  .field-label { font-size: 13px; color: var(--ink-2); margin-bottom: 7px; }
+  .segmented { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--ink); border-radius: 8px; overflow: hidden; }
+  .segmented button { background: transparent; border: 0; padding: 9px 0; cursor: pointer; font-weight: 500; }
+  .segmented button + button { border-left: 1px solid var(--ink); }
+  .segmented button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+
+  .segmented.two { grid-template-columns: repeat(2, 1fr); }
+  .app.is-live .replay-only { display: none; }
+  .live-only { display: none; }
+  .app.is-live .live-only { display: block; }
+  .app.is-live .stage { grid-template-rows: 1fr; }
+  .live-panel { border-top: 1px solid var(--rule); padding-top: 18px; display: none; }
+  .app.is-live .live-panel { display: grid; gap: 14px; }
+  .live-panel .big { font-size: 34px; font-weight: 600; letter-spacing: -.01em; line-height: 1.05; }
+  .live-panel .sub { font-size: 13.5px; color: var(--ink-2); }
+  .live-panel .counts { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 14px; font-size: 13.5px; color: var(--ink-2); }
+  .live-panel .counts b { display: block; font-size: 22px; font-weight: 600; color: var(--ink); }
+  .live-panel p { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+  .live-panel .warn { color: #8a4b00; background: #fbf0dc; border-radius: 6px; padding: 8px 10px; }
+  .live-panel .warn[hidden] { display: none; }
+  .legend { display: grid; gap: 6px; font-size: 13.5px; color: var(--ink-2); }
+  .legend .row { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 12px; }
+  .legend svg { display: block; }
+  .legend b { color: var(--ink); font-weight: 600; }
+  .legend .note { font-size: 13px; color: var(--ink-3); }
+
+  .score h2 { font-size: 16px; font-weight: 650; letter-spacing: -0.01em; margin: 0 0 4px; }
+  .score { border-top: 1px solid var(--rule); padding-top: 18px; }
+  .score p { margin: 0 0 12px; font-size: 13.5px; color: var(--ink-2); }
+  .bars { display: grid; gap: 7px; margin-bottom: 14px; }
+  .bar-row { display: grid; grid-template-columns: 104px 1fr 40px; align-items: center; gap: 10px; font-size: 13.5px; }
+  .bar-row .track { height: 10px; }
+  .bar-row .fill { height: 100%; background: var(--neutral); border-radius: 0 4px 4px 0; transition: width .25s; }
+  .bar-row.ours .fill { background: var(--ink); }
+  .bar-row.ours { font-weight: 600; }
+  .bar-row .num { text-align: right; }
+  .stock { border-top: 1px solid var(--rule); padding-top: 18px; }
+  .stock h2 { font-size: 16px; font-weight: 650; letter-spacing: -0.01em; margin: 0 0 4px; }
+  .stock p { margin: 0 0 10px; font-size: 13.5px; color: var(--ink-2); }
+  .stock .chart-wrap { position: relative; }
+  .stock svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .stock svg text { font: 11.5px "Instrument Sans", sans-serif; fill: var(--ink-3); }
+  .stock svg text.lab { fill: var(--ink-2); font-size: 12px; }
+  .stock .ctip { position: absolute; pointer-events: none; display: none; background: var(--ink); color: #fff; border-radius: 6px; padding: 6px 9px; font-size: 12.5px; line-height: 1.35; white-space: nowrap; transform: translate(-50%, -115%); }
+  .stock .caption { font-size: 12.5px; color: var(--ink-3); margin: 6px 0 10px; }
+  .more { font-size: 13.5px; color: var(--ink); font-weight: 600; text-underline-offset: 3px; }
+  .lede-link { display: inline-block; margin-top: 8px; font-size: 13.5px; }
+  .key { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--ink-2); }
+  .key span { display: inline-flex; align-items: center; gap: 6px; }
+  .key i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .key i.hollow { border: 1.5px solid #8b8f95; width: 9px; height: 9px; }
+  .key .sz { color: var(--ink-3); }
+  .tabs { display: flex; flex-direction: column; min-height: 0; flex: 1; border-top: 1px solid var(--rule); padding-top: 14px; }
+  .tabbar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; background: #efede7; border-radius: 10px; padding: 3px; }
+  .tabbar button { border: 0; background: transparent; border-radius: 8px; padding: 7px 4px 8px; font-size: 13px; font-weight: 500; color: var(--ink-2); cursor: pointer; line-height: 1.2; }
+  .tabbar button span { display: block; font-size: 11px; color: var(--ink-3); font-weight: 500; margin-bottom: 1px; }
+  .tabbar button[aria-selected="true"] { background: var(--panel); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(22,25,29,.12); }
+  .panels { flex: 1; min-height: 0; overflow-y: auto; padding: 14px 2px 4px; margin: 0 -2px; }
+  .panel { border-top: 0 !important; padding-top: 0 !important; }
+  .linkish { all: unset; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; color: var(--ink); }
+  .linkish:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  @media (min-width: 881px) { .side { overflow: hidden; } }
+  .panel h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .panel .act-head { float: right; margin: 0 0 4px 8px; }
+  .side { gap: 14px; }
+  .side header h1 { font-size: 21px; margin-bottom: 6px; }
+  .clock { padding-top: 12px; }
+  .howto { margin: 8px 0 0; font-size: 13px; color: var(--ink-3); }
+  .method-link { display: inline-flex; align-items: center; gap: 0; margin-top: 10px; padding: 6px 12px; border: 1px solid var(--ink); border-radius: 999px;
+                 font-size: 13px; font-weight: 600; color: var(--ink); text-decoration: none; }
+  .method-link span { font-weight: 400; color: var(--ink-2); }
+  .method-link:hover { background: var(--ink); color: var(--panel); }
+  .method-link:hover span { color: #cfd2d6; }
+  .clock .weather { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .clock .weather .wx { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-2); }
+  .clock .weather svg { width: 14px; height: 14px; stroke: var(--ink-3); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .stock .lead { color: var(--ink); margin-bottom: 14px; }
+  .step { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 12px 0; border-top: 1px solid var(--rule); }
+  .step .sn { width: 20px; height: 20px; border-radius: 50%; background: var(--ink); color: var(--panel); font-size: 11.5px; font-weight: 600; display: grid; place-items: center; margin-top: 1px; }
+  .step .st { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+  .step p { margin: 6px 0 0; }
+  .said { display: grid; gap: 10px; margin-top: 8px; }
+  .said .grp { font-size: 12.5px; color: var(--ink-3); }
+  .said .row { display: grid; grid-template-columns: 62px 1fr 38px; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); }
+  .said .track { height: 8px; background: #efede7; border-radius: 4px; overflow: hidden; }
+  .said .fill { height: 100%; border-radius: 4px; background: var(--neutral); }
+  .said .fill.real { background: var(--ink); }
+  .said .v { text-align: right; font-weight: 600; color: var(--ink); }
+  .weeks { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; background: #efede7; border-radius: 10px; padding: 3px; }
+  .weeks a { text-decoration: none; color: var(--ink-2); border-radius: 8px; padding: 6px 8px 7px; font-size: 13px; line-height: 1.25; }
+  .weeks a small { display: block; font-size: 11.5px; color: var(--ink-3); }
+  .weeks a[aria-current="true"] { background: var(--panel); color: var(--ink); font-weight: 600; box-shadow: 0 1px 2px rgba(22,25,29,.12); }
+  .weeks a:hover:not([aria-current="true"]) { color: var(--ink); }
+  .act li.empty button { box-shadow: inset 3px 0 0 #2e9d63; padding-left: 9px; }
+  .facts { margin: 0; padding: 0; list-style: none; display: grid; gap: 5px; font-size: 13.5px; color: var(--ink-2); }
+  .facts b { color: var(--ink); font-weight: 600; }
+  .act { border-top: 1px solid var(--rule); padding-top: 18px; }
+  .act-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .act-head h2 { margin: 0; }
+  .act .info { all: unset; box-sizing: border-box; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--ink-3); color: var(--ink-2); font: italic 600 13px Georgia, serif; text-align: center; line-height: 19px; cursor: pointer; }
+  .act .info:hover, .act .info[aria-expanded="true"] { background: var(--ink); border-color: var(--ink); color: var(--panel); }
+  .act .info:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .act-info { background: #f0eee8; border-radius: 10px; padding: 12px 14px 4px; margin: 4px 0 12px; font-size: 13.5px; color: var(--ink-2); }
+  .act-info p { margin: 0 0 10px; }
+  .act-info b { color: var(--ink); }
+  .act-info dl { margin: 0 0 10px; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; }
+  .act-info dt { font-weight: 600; color: var(--ink); }
+  .act-info dd { margin: 0; }
+  .act h2 { font-size: 16px; font-weight: 650; letter-spacing: -0.01em; margin: 0 0 4px; }
+  .act p { margin: 0 0 10px; font-size: 13.5px; color: var(--ink-2); }
+  .act .tally { color: var(--ink); font-weight: 600; }
+  .act ol { list-style: none; margin: 0 0 8px; padding: 0; }
+  .act li button { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 1fr auto; gap: 0 10px; width: 100%; padding: 7px 0; border-top: 1px solid var(--rule); cursor: pointer; font-size: 13.5px; color: var(--ink-2); }
+  .act li button:hover .nm { text-decoration: underline; }
+  .act li button:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .act .nm { color: var(--ink); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .act .res { text-align: right; white-space: nowrap; color: var(--ink-2); }
+  .act .tag { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 99px; margin-left: 6px; }
+  .act .tag.yes { background: #dcefe3; color: #17613b; }
+  .act .tag.small { background: #ebeae5; color: var(--ink-3); }
+  .act .tag.wrong { background: #fbe6cf; color: #8a4a06; }
+  .act li button:hover, .act li button:focus-visible { background: #f0eee8; }
+  .act li.yes button { box-shadow: inset 3px 0 0 #2e9d63; padding-left: 9px; }
+  .act li.small button { box-shadow: inset 3px 0 0 #cfcdc5; padding-left: 9px; }
+  .act li.wrong button { box-shadow: inset 3px 0 0 #e0902f; padding-left: 9px; }
+  .act .sm { grid-column: 1 / -1; font-size: 12.5px; color: var(--ink-3); }
+  .act .note { font-size: 12.5px; color: var(--ink-3); }
+  table.rt { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-bottom: 10px; }
+  table.rt th { font-weight: 500; color: var(--ink-3); font-size: 12.5px; text-align: right; padding: 0 0 5px 8px; vertical-align: bottom; line-height: 1.25; }
+  table.rt th:first-child, table.rt td:first-child { text-align: left; padding-left: 0; }
+  table.rt td { text-align: right; padding: 6px 0 6px 8px; border-top: 1px solid var(--rule); }
+  table.rt td.best { font-weight: 700; color: var(--ink); }
+  table.rt td.dim { color: var(--ink-3); }
+  .foot { margin-top: auto; font-size: 12.5px; color: var(--ink-3); }
+  .foot a { color: inherit; }
+
+  /* ---------- map column ---------- */
+  .stage { position: relative; min-width: 0; display: grid; grid-template-rows: 1fr var(--strip); }
+  #map { min-height: 0; background: #ecebe6; }
+  .maplibregl-ctrl-attrib { font-family: inherit; font-size: 11px; }
+
+  .hover-label { position: absolute; z-index: 3; pointer-events: none; background: var(--ink); color: #fff; border-radius: 8px; padding: 7px 10px; font-size: 13px; line-height: 1.35; max-width: 260px; box-shadow: 0 2px 10px rgba(0,0,0,.18); }
+  .hover-label small { display: block; color: #cfd2d6; font-size: 12px; }
+  .tip {
+    position: absolute; pointer-events: none; z-index: 5; display: none; max-width: 260px;
+    background: var(--ink); color: #fff; padding: 8px 11px; border-radius: 6px; font-size: 13px; line-height: 1.35;
+    transform: translate(14px, -50%);
+  }
+  .tip .t-name { font-weight: 600; }
+  .tip .t-sub { opacity: .78; }
+
+  /* ---------- station sheet (opens in the centre) ---------- */
+  .veil { position: fixed; inset: 0; z-index: 20; background: rgba(22, 25, 29, .34); display: grid; place-items: center; padding: 20px; }
+  .veil[hidden] { display: none; }
+  .sheet {
+    position: relative; width: min(1040px, 100%); max-height: calc(100vh - 40px); overflow-y: auto;
+    background: var(--panel); border-radius: 14px; padding: 26px 30px 22px;
+    box-shadow: 0 30px 80px -20px rgba(22, 25, 29, .5);
+  }
+  .sheet .close { position: absolute; top: 14px; right: 14px; width: 38px; height: 38px; border: 0; background: transparent; cursor: pointer; border-radius: 8px; font-size: 24px; line-height: 1; color: var(--ink-2); }
+  .sheet .close:hover { background: #eceae3; }
+  .sheet h2 { font-size: 24px; letter-spacing: -0.02em; font-weight: 700; margin: 0 44px 2px 0; }
+  .sheet .sub { font-size: 14px; color: var(--ink-3); }
+  .now { display: grid; grid-template-columns: 1fr auto; gap: 18px 32px; align-items: end; margin: 18px 0 16px; }
+  .verdict { font-size: 26px; line-height: 1.15; font-weight: 600; letter-spacing: -0.02em; display: flex; align-items: baseline; gap: 10px; }
+  .verdict .dot { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+  .range, .happened { font-size: 15px; color: var(--ink-2); margin-top: 4px; }
+  .chips { display: grid; grid-auto-flow: column; gap: 8px; }
+  .chip { border: 1px solid var(--rule); background: transparent; border-radius: 10px; padding: 8px 14px 9px; cursor: pointer; text-align: left; min-width: 92px; }
+  .chip small { display: block; font-size: 12.5px; color: var(--ink-3); }
+  .chip strong { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+  .chip[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  .chip:hover { border-color: var(--ink-3); }
+
+  .chart-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 10px 20px; border-top: 1px solid var(--rule); padding-top: 14px; }
+  .chart-key { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; color: var(--ink-2); }
+  .chart-key span { display: inline-flex; align-items: center; gap: 7px; }
+  .chart-key i { display: inline-block; flex: none; }
+  .k-line { width: 20px; height: 3px; background: var(--ink); border-radius: 2px; }
+  .k-band { width: 20px; height: 11px; background: rgba(22, 25, 29, .13); border-radius: 2px; }
+  .k-in { width: 8px; height: 8px; border-radius: 50%; border: 1.6px solid #7a46c9; }
+  .k-out { width: 9px; height: 9px; border-radius: 50%; background: #7a46c9; }
+  .zoom { display: flex; gap: 6px; align-items: center; }
+  .zoom button { border: 1px solid var(--rule); background: transparent; border-radius: 7px; padding: 5px 11px; cursor: pointer; font-size: 13px; }
+  .zoom button:hover { border-color: var(--ink-3); }
+  .zoom button[aria-pressed="true"] { background: var(--ink); color: var(--panel); border-color: var(--ink); }
+  .zoom .step { width: 32px; padding: 5px 0; font-size: 16px; line-height: 1.1; }
+  .chart-box { position: relative; margin-top: 8px; }
+  #chart { width: 100%; height: auto; display: block; cursor: grab; touch-action: none; user-select: none; }
+  #chart.dragging { cursor: grabbing; }
+  #chart text { font: 12px "Instrument Sans", sans-serif; fill: var(--ink-3); }
+  #chart text.strong { fill: var(--ink); font-weight: 600; }
+  .chart-tip { position: absolute; top: 6px; pointer-events: none; display: none; background: var(--ink); color: #fff; border-radius: 8px; padding: 9px 12px; font-size: 13px; line-height: 1.45; white-space: nowrap; z-index: 2; }
+  .chart-tip b { font-weight: 600; }
+  .chart-tip .muted { opacity: .75; }
+  .chart-foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 24px; font-size: 13.5px; color: var(--ink-2); margin-top: 8px; }
+  .chart-foot b { color: var(--ink); font-weight: 600; }
+  .chart-foot .hint { color: var(--ink-3); }
+
+  /* ---------- week strip ---------- */
+  .strip { background: var(--panel); border-top: 1px solid var(--rule); padding: 10px 18px 10px 14px; display: grid; grid-template-columns: 44px 1fr; gap: 12px; align-items: center; }
+  .play { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--ink); background: transparent; cursor: pointer; display: grid; place-items: center; }
+  .play:hover { background: var(--ink); }
+  .play:hover svg { fill: var(--panel); }
+  .play svg { fill: var(--ink); }
+  .week { position: relative; min-width: 0; }
+  .week-title { font-size: 12.5px; color: var(--ink-3); margin-bottom: 3px; display: flex; justify-content: space-between; gap: 12px; }
+  #bars { width: 100%; height: 52px; display: block; cursor: ew-resize; touch-action: none; }
+  .days { display: grid; grid-template-columns: repeat(7, 1fr); font-size: 12px; color: var(--ink-2); margin-top: 3px; }
+  .days span { border-left: 1px solid var(--rule); padding-left: 5px; white-space: nowrap; overflow: hidden; }
+  #scrub { position: absolute; left: 0; right: 0; bottom: 20px; width: 100%; height: 52px; margin: 0; opacity: 0; cursor: ew-resize; }
+
+  .error { position: absolute; inset: 0; display: grid; place-items: center; padding: 32px; text-align: center; background: var(--paper); z-index: 9; }
+  .error[hidden] { display: none; }
+  .error code { background: #eceae3; padding: 2px 6px; border-radius: 4px; }
+
+  @media (max-width: 880px) {
+    html, body { height: auto; }
+    .app { display: block; }
+    .side { border-right: 0; border-bottom: 1px solid var(--rule); padding: 20px 16px; gap: 20px; overflow: visible; }
+    .stage { display: block; }
+    #map { height: 62vh; }
+    .veil { padding: 8px; }
+    .sheet { padding: 20px 16px 16px; max-height: calc(100vh - 16px); }
+    .sheet h2 { font-size: 20px; }
+    .now { grid-template-columns: 1fr; }
+    .verdict { font-size: 21px; }
+    .chip { min-width: 0; }
+    .clock .time { font-size: 44px; }
+    .panels { overflow: visible; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <header>
+      <h1>Which BIXI stations will fill up, and which will run empty</h1>
+      <p class="lede" id="lede">Forecast net bikes (arrivals minus departures) at Montreal's 100 busiest stations, replayed hour by hour.</p>
+      <p class="howto">Drag the timeline at the bottom, or press play: the map and every panel here follow the hour. Click a circle to open its station.</p>
+      <a class="method-link" href="method.html">How it works<span>: the method, maths and tests</span></a>
+    </header>
+
+    <section id="mode-section" hidden>
+      <div class="segmented two" role="group" aria-label="Map mode" id="mode">
+        <button data-mode="replay" aria-pressed="true">Replay week</button>
+        <button data-mode="live" aria-pressed="false">Live now</button>
+      </div>
+    </section>
+
+    <section class="live-panel" id="live-panel" aria-live="polite">
+      <div>
+        <div class="big" id="live-time">--:--</div>
+        <div class="sub" id="live-age">Connecting to BIXI's live feed</div>
+      </div>
+      <div class="counts" id="live-counts"></div>
+      <div class="legend" aria-label="How to read live mode">
+        <div class="row"><svg width="84" height="22" aria-hidden="true"><circle cx="12" cy="11" r="10" fill="#d8492b"/><circle cx="36" cy="11" r="7" fill="#e4917c"/></svg><span><b>Nearly empty.</b> Few bikes to take.</span></div>
+        <div class="row"><svg width="84" height="22" aria-hidden="true"><circle cx="12" cy="11" r="10" fill="#2f6fde"/><circle cx="36" cy="11" r="7" fill="#7fa3e4"/></svg><span><b>Nearly full.</b> Few free docks.</span></div>
+        <div class="row"><svg width="84" height="22" aria-hidden="true"><circle cx="12" cy="11" r="5" fill="none" stroke="#8b8f95" stroke-width="1.5"/></svg><span><b>Hollow:</b> offline or no live match.</span></div>
+        <div class="note">A bigger circle means completely empty or completely full.</div>
+      </div>
+      <p class="warn" id="live-warn" hidden></p>
+      <p>These are bikes at the stations right now, read from BIXI's public feed in your browser. There is no forecast here: the model is trained on summer, and the network is smaller in winter, so a forecast would not be fair. Many stations are parked for the season and show as offline.</p>
+    </section>
+
+    <nav class="weeks replay-only" id="weeks" aria-label="Which week to replay"></nav>
+
+    <section class="clock replay-only" aria-live="polite">
+      <div class="day" id="day">&nbsp;</div>
+      <div class="time" id="time">--:--</div>
+      <div class="window" id="window">&nbsp;</div>
+      <div class="weather" id="weather">&nbsp;</div>
+    </section>
+
+    <section class="replay-only">
+      <div class="field-label" id="hz-label">Look ahead</div>
+      <div class="segmented" role="group" aria-labelledby="hz-label" id="horizons"></div>
+    </section>
+
+    <div class="key replay-only" aria-label="How to read the map">
+      <span><i style="background:#2f6fde"></i>gains bikes</span>
+      <span><i style="background:#d8492b"></i>loses bikes</span>
+      <span><i style="background:#2f6fde;opacity:.3"></i>unsure</span>
+      <span><i class="hollow"></i>no forecast</span>
+      <span class="sz">bigger circle, bigger change</span>
+    </div>
+
+    <div class="tabs replay-only">
+      <div class="tabbar" role="tablist" aria-label="What to read next">
+        <button role="tab" id="t-act" aria-controls="tab-act" aria-selected="true" data-tab="act"><span>1</span>Where to look</button>
+        <button role="tab" id="t-score" aria-controls="tab-score" aria-selected="false" data-tab="score"><span>2</span>Is it right?</button>
+        <button role="tab" id="t-stock" aria-controls="tab-stock" aria-selected="false" data-tab="stock"><span>3</span>Will it empty?</button>
+      </div>
+      <div class="panels">
+    <section class="act panel" id="tab-act" role="tabpanel" aria-labelledby="t-act" aria-live="polite">
+      <div class="act-head"><h2>Stations to look at</h2>
+        <button class="info" id="act-info-btn" aria-expanded="false" aria-controls="act-info" aria-label="What is this section?">i</button></div>
+      <div class="act-info" id="act-info" hidden></div>
+      <p id="act-intro"></p>
+      <ol id="act-list"></ol>
+      <p class="note">Hover a row to find it on the map. Click to open it. <span id="act-note">These are the biggest moves, not a list of stations about to run empty: for that, how many bikes are there now matters more. <button class="linkish" data-goto="stock">See why</button>, or replay the 2025 week, which has station counts.</span></p>
+    </section>
+
+    <section class="score panel" id="tab-score" role="tabpanel" aria-labelledby="t-score" hidden>
+      <h2>Can you trust the list?</h2>
+      <p id="score-intro"></p>
+      <div class="bars" id="score-bars"></div>
+      <ul class="facts" id="score-facts"></ul>
+    </section>
+
+    <section class="stock panel" id="tab-stock" role="tabpanel" aria-labelledby="t-stock" hidden>
+      <h2>Will it actually run empty?</h2>
+      <p class="lead">A big predicted loss is not always an empty station. Checked on real station counts:</p>
+      <div class="step"><div class="sn">1</div><div>
+        <div class="st">Trips miss the trucks</div>
+        <p id="stock-a"></p>
+      </div></div>
+      <div class="step"><div class="sn">2</div><div>
+        <div class="st">So the raw chance is too sure</div>
+        <div class="said" id="stock-bars"></div>
+        <p id="stock-b"></p>
+      </div></div>
+      <div class="step"><div class="sn">3</div><div>
+        <div class="st">Corrected, it helps a little</div>
+        <p id="stock-c"></p>
+      </div></div>
+      <div class="step"><div class="sn">4</div><div>
+        <div class="st">So which stations should a truck check?</div>
+        <div class="said" id="stock-rank"></div>
+        <p id="stock-d"></p>
+      </div></div>
+      <p class="caption" id="stock-note"></p>
+      <a class="more" href="method.html#empty">See the full chart and the maths</a>
+    </section>
+      </div>
+    </div>
+
+    <p class="foot">Data: BIXI Montréal, Open-Meteo / ECMWF, and Max Halford's station-feed archive. Trips do not count trucks moving bikes.</p>
+  </aside>
+
+  <main class="stage">
+    <div id="map" aria-label="Map of forecast net bikes by station"></div>
+    <div class="tip" id="tip"></div>
+    <div class="hover-label" id="hover-label" hidden></div>
+
+    <div class="strip replay-only">
+      <button class="play" id="play" aria-label="Play the week"><svg width="16" height="16" viewBox="0 0 16 16" id="play-icon"><path d="M4 2.5v11l9-5.5z"/></svg></button>
+      <div class="week">
+        <div class="week-title"><span>Bikes expected to shift across all stations, hour by hour. Drag or press play: everything follows the hour.</span><span id="week-range"></span></div>
+        <svg id="bars" preserveAspectRatio="none" aria-hidden="true"></svg>
+        <div class="days" id="days"></div>
+        <input type="range" id="scrub" min="0" max="167" step="1" value="0" aria-label="Hour of the week">
+      </div>
+    </div>
+
+    <div class="error" id="error" hidden></div>
+  </main>
+</div>
+
+<div class="veil" id="veil" hidden>
+  <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="s-name">
+    <button class="close" id="close" aria-label="Close station details">×</button>
+    <h2 id="s-name"></h2>
+    <div class="sub" id="s-sub"></div>
+    <div class="now">
+      <div>
+        <div class="verdict"><span class="dot" id="s-dot"></span><span id="s-verdict"></span></div>
+        <div class="range" id="s-range"></div>
+        <div class="happened" id="s-happened"></div>
+      </div>
+      <div class="chips" id="s-chips" role="group" aria-label="Look ahead"></div>
+    </div>
+    <div class="chart-bar">
+      <div class="chart-key">
+        <span><i class="k-line"></i>Forecast</span>
+        <span><i class="k-band"></i>Likely range (80%)</span>
+        <span><i class="k-in"></i>Happened, inside the range</span>
+        <span><i class="k-out"></i>Happened, outside the range</span>
+      </div>
+      <div class="zoom" role="group" aria-label="Zoom the chart">
+        <button data-span="24">Day</button><button data-span="72">3 days</button><button data-span="168">Week</button>
+        <button class="step" id="zoom-out" aria-label="Zoom out">−</button><button class="step" id="zoom-in" aria-label="Zoom in">+</button>
+      </div>
+    </div>
+    <div class="chart-box">
+      <svg id="chart" viewBox="0 0 980 380" role="img" aria-label="Forecast, likely range and outcome for this station"></svg>
+      <div class="chart-tip" id="chart-tip"></div>
+    </div>
+    <div class="chart-foot"><span id="s-week"></span><span class="hint">Scroll to zoom, drag to pan, click to jump to that hour.</span></div>
+  </section>
+</div>
+
+<script type="module">
+import { Map as MapLibreMap, NavigationControl } from "./vendor/maplibre-gl.mjs";
+import { MapLibreOverlay, ScatterplotLayer } from "./vendor/deck.mjs";
+
+const $ = (id) => document.getElementById(id);
+const GAIN = [47, 111, 222], LOSS = [216, 73, 43], NEUTRAL = [176, 175, 170];
+const WD = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+let DATA;
+try {
+  const wk = new URLSearchParams(location.search).get("week");
+  const file = wk && /^\d{4}-\d{2}-\d{2}$/.test(wk) ? `data/week_${wk}.json` : "data/forecast.json";
+  const res = await fetch(file, { cache: "no-cache" });
+  if (!res.ok) throw new Error(res.status);
+  DATA = await res.json();
+} catch (e) {
+  $("error").hidden = false;
+  $("error").innerHTML = "<div><p><b>The forecast file did not load.</b></p><p>Run <code>.venv/bin/python src/s07_export_map.py</code> to create <code>web/data/forecast.json</code>, then open this page through <code>./run_map.sh</code> (not by double-clicking the file).</p></div>";
+  throw e;
+}
+
+let LIVE_MAP = null;      // live station id -> our station id; the page works without it (replay only)
+try { const r = await fetch("data/live_map.json"); if (r.ok) LIVE_MAP = await r.json(); } catch (e) { /* replay only */ }
+const FEED = "https://gbfs.velobixi.com/gbfs/en/station_status.json";
+
+const stations = DATA.stations;
+const N_HOURS = DATA.meta.hours;
+// The file stores local Montreal wall-clock time. Read it as plain numbers so the viewer's own time zone never shifts it.
+const [Y, Mo, D] = DATA.meta.first_hour.slice(0, 10).split("-").map(Number);
+const wall = (i) => new Date(Date.UTC(Y, Mo - 1, D, i));           // used only for formatting, in UTC
+const fmt = (f, d) => f.format(d).replace(",", "");
+const hh = (i) => String(((i % 24) + 24) % 24).padStart(2, "0") + ":00";
+
+const state = { hour: 3 * 24 + 17, h: 3, selected: null, playing: false, hover: null };   // opens on Thursday 17:00
+const F = () => DATA.forecasts[state.h];
+const signed = (v) => (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(Math.round(v));
+
+/* ---------- how a forecast becomes a circle ---------- */
+function reading(si, hour = state.hour) {
+  const f = F().forecast[hour][si];
+  if (f == null) return null;
+  const lo = F().low[hour][si], hi = F().high[hour][si], actual = F().actual[hour][si];
+  // Sure = the likely range sits on one side of zero. Otherwise fade by how far the range reaches past zero.
+  const reach = f >= 0 ? f - lo : hi - f;
+  const sure = reach <= 0 ? 1 : Math.max(0, Math.min(1, Math.abs(f) / reach));
+  return { f, lo, hi, actual, sure };
+}
+const scale = () => DATA.scorecard[state.h].cutoff;      // a "big" change for this look-ahead
+function colour(r) {
+  const strength = Math.min(1, Math.abs(r.f) / scale()) ** 0.75;
+  const pole = r.f >= 0 ? GAIN : LOSS;
+  const rgb = NEUTRAL.map((n, k) => Math.round(n + (pole[k] - n) * strength));
+  return [...rgb, Math.round(255 * (0.2 + 0.8 * r.sure))];
+}
+const radius = (r) => 4.5 + 15 * Math.sqrt(Math.min(1, Math.abs(r.f) / (2.5 * scale())));
+
+/* ---------- map ---------- */
+const map = new MapLibreMap({
+  container: "map",
+  style: "https://tiles.openfreemap.org/styles/positron",
+  center: [-73.578, 45.517], zoom: 12.4, minZoom: 10.5, maxZoom: 16.5,
+  attributionControl: { compact: true },
+});
+map.addControl(new NavigationControl({ showCompass: false }), "bottom-right");
+const overlay = new MapLibreOverlay({ interleaved: false, layers: [] });
+window.map = map;                         // lets tools such as maplibre-mcp read the camera
+window.bixi = { map, state: null };      // handy in the browser console
+map.addControl(overlay);
+map.on("load", () => {
+  for (const layer of map.getStyle().layers) {
+    if (layer.type === "symbol" && /shield|highway|road_|poi|airport/.test(layer.id)) map.removeLayer(layer.id);
+  }
+  const lons = stations.map((s) => s.lon), lats = stations.map((s) => s.lat);
+  map.fitBounds([[Math.min(...lons), Math.min(...lats)], [Math.max(...lons), Math.max(...lats)]],
+                { padding: { top: 50, bottom: 40, left: 50, right: 50 }, duration: 0 });
+});
+
+function placeHoverLabel() {
+  const el = $("hover-label");
+  if (state.hover == null || live.on) { el.hidden = true; return; }
+  const s = stations[state.hover], r = reading(state.hover);
+  if (!r) { el.hidden = true; return; }
+  el.innerHTML = `${s.name}<small>${sentence(r)}</small>`;
+  el.hidden = false;
+  const pt = map.project([s.lon, s.lat]), box = $("map").getBoundingClientRect(), stage = el.offsetParent.getBoundingClientRect();
+  const ox = box.left - stage.left, oy = box.top - stage.top;
+  const rad = radius(r) + 10;
+  const w = el.offsetWidth, h = el.offsetHeight;
+  let x = pt.x + rad, y = pt.y - h / 2;
+  if (x + w > box.width - 8) x = pt.x - rad - w;          // flip to the left near the right edge
+  y = Math.max(8, Math.min(box.height - h - 8, y));
+  el.style.left = `${ox + x}px`; el.style.top = `${oy + y}px`;
+}
+map.on("move", placeHoverLabel);
+
+function drawMap() {
+  if (live.on) return drawLiveMap();
+  const key = [state.hour, state.h];
+  const base = new ScatterplotLayer({
+    id: "stations", data: stations, pickable: true, stroked: true, radiusUnits: "pixels", lineWidthUnits: "pixels",
+    getPosition: (s) => [s.lon, s.lat],
+    getRadius: (s, { index }) => { const r = reading(index); return r ? radius(r) : 4.5; },
+    getFillColor: (s, { index }) => {
+      const r = reading(index);
+      if (!r) return [0, 0, 0, 0];
+      const c = colour(r);
+      return state.hover == null ? c : [c[0], c[1], c[2], Math.round(c[3] * 0.3)];   // the rest fade (hue kept) while one is highlighted
+    },
+    getLineColor: (s, { index }) => (reading(index) ? [251, 250, 247, state.hover == null ? 235 : 60] : [139, 143, 149, state.hover == null ? 255 : 90]),
+    getLineWidth: 1.5,
+    updateTriggers: { getRadius: key, getFillColor: [...key, state.hover], getLineColor: [...key, state.hover] },
+    transitions: { getRadius: 160, getFillColor: 160 },
+    onHover: showTip,
+    onClick: ({ index }) => index >= 0 && !live.on && select(index),
+  });
+  const ring = new ScatterplotLayer({
+    id: "selected", data: state.selected == null ? [] : [stations[state.selected]],
+    radiusUnits: "pixels", lineWidthUnits: "pixels", stroked: true, filled: false,
+    getPosition: (s) => [s.lon, s.lat],
+    getRadius: () => { const r = reading(state.selected); return (r ? radius(r) : 4.5) + 5; },
+    getLineColor: [22, 25, 29, 255], getLineWidth: 2,
+    updateTriggers: { getRadius: [...key, state.selected] },
+  });
+  const hov = state.hover == null ? [] : [stations[state.hover]];
+  const hr = state.hover == null ? null : reading(state.hover);
+  const one = hr ? [stations[state.hover]] : [];
+  // Same size and colour as on the base map (size encodes the forecast, so it must not change); a white halo and a dark outline lift it out.
+  const halo = new ScatterplotLayer({
+    id: "hover-halo", data: one, radiusUnits: "pixels",
+    getPosition: (s) => [s.lon, s.lat], getRadius: () => radius(hr) + 6, getFillColor: [255, 255, 255, 255],
+    updateTriggers: { getRadius: [...key, state.hover] },
+  });
+  const pop = new ScatterplotLayer({
+    id: "hover-pop", data: one, radiusUnits: "pixels", lineWidthUnits: "pixels", stroked: true,
+    getPosition: (s) => [s.lon, s.lat], getRadius: () => radius(hr),
+    getFillColor: () => { const c = colour(hr); return [c[0], c[1], c[2], 255]; }, getLineColor: [22, 25, 29, 255], getLineWidth: 2,
+    updateTriggers: { getRadius: [...key, state.hover], getFillColor: [...key, state.hover] },
+  });
+  placeHoverLabel();
+  overlay.setProps({ layers: [base, ring, halo, pop] });
+}
+
+/* ---------- live now ---------- */
+const LEDE_REPLAY = document.getElementById("lede").innerHTML;
+const live = { on: false, readings: new Map(), updated: null, fails: 0, everOk: false, timer: null, ticker: null };
+const byOurId = new Map(stations.map((s, i) => [s.id, i]));
+
+function liveState(r) {
+  if (!r.renting) return "offline";
+  if (r.bikes === 0) return "empty";
+  if (r.docks === 0) return "full";
+  return "ok";
+}
+function liveColour(r) {
+  if (!r.renting) return [0, 0, 0, 0];
+  const share = r.bikes + r.docks > 0 ? r.bikes / (r.bikes + r.docks) : 0.5;
+  const t = (share - 0.5) * 2, pole = t >= 0 ? GAIN : LOSS;
+  const strength = Math.min(1, Math.abs(t)) ** 1.1;
+  return [...NEUTRAL.map((n, k) => Math.round(n + (pole[k] - n) * strength)), 235];
+}
+function drawLiveMap() {
+  const rd = (i) => live.readings.get(i);
+  const layer = new ScatterplotLayer({
+    id: "stations-live", data: stations, pickable: true, stroked: true, radiusUnits: "pixels", lineWidthUnits: "pixels",
+    getPosition: (s) => [s.lon, s.lat],
+    getRadius: (s, { index }) => { const r = rd(index); return !r ? 4.5 : r.bikes === 0 || r.docks === 0 ? 11 : 7.5; },
+    getFillColor: (s, { index }) => { const r = rd(index); return r ? liveColour(r) : [0, 0, 0, 0]; },
+    getLineColor: (s, { index }) => { const r = rd(index); return r && r.renting ? [251, 250, 247, 235] : [139, 143, 149, 255]; },
+    getLineWidth: 1.5,
+    updateTriggers: { getRadius: live.updated, getFillColor: live.updated, getLineColor: live.updated },
+    transitions: { getRadius: 200, getFillColor: 200 },
+    onHover: showTip,
+  });
+  overlay.setProps({ layers: [layer] });
+}
+function ago(sec) {
+  if (sec < 90) return `${Math.max(0, Math.round(sec))} s ago`;
+  if (sec < 5400) return `${Math.round(sec / 60)} min ago`;
+  if (sec < 172800) return `${Math.round(sec / 3600)} h ago`;
+  return `${Math.round(sec / 86400)} days ago`;
+}
+function drawLivePanel() {
+  const now = new Date();
+  $("live-time").textContent = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "America/Montreal" }).format(now);
+  $("live-age").textContent = live.updated == null ? "Connecting to BIXI's live feed"
+    : `Feed updated ${ago(Date.now() / 1000 - live.updated)}. Montreal time.`;
+  const c = { ok: 0, empty: 0, full: 0, offline: 0 };
+  for (const r of live.readings.values()) c[liveState(r)]++;
+  const nomatch = stations.length - live.readings.size;
+  $("live-counts").innerHTML = live.updated == null ? "" :
+    `<div><b>${c.empty}</b>empty</div><div><b>${c.full}</b>full</div><div><b>${c.ok}</b>in between</div><div><b>${c.offline + nomatch}</b>offline or unmatched</div>`;
+  const warn = $("live-warn");
+  if (live.fails >= 1 && live.everOk) { warn.hidden = false; warn.textContent = "Could not refresh. Showing the last reading, retrying every 30 seconds."; }
+  else if (live.fails >= 1) { warn.hidden = false; warn.textContent = "Could not reach BIXI's live feed. Retrying every 30 seconds."; }
+  else warn.hidden = true;
+}
+async function refreshLive() {
+  try {
+    const res = await fetch(FEED, { cache: "no-store" });
+    if (!res.ok) throw new Error(res.status);
+    const js = await res.json();
+    const next = new Map();
+    for (const s of js.data.stations) {
+      const our = LIVE_MAP.to_ours[String(s.station_id)];
+      if (our == null || !byOurId.has(our)) continue;
+      next.set(byOurId.get(our), {
+        bikes: +s.num_bikes_available || 0, ebikes: +s.num_ebikes_available || 0, docks: +s.num_docks_available || 0,
+        renting: !!(+s.is_installed && +s.is_renting), reported: +s.last_reported || null,
+      });
+    }
+    if (!next.size) throw new Error("no matching stations");
+    live.readings = next; live.updated = +js.last_updated || Math.floor(Date.now() / 1000);
+    live.fails = 0; live.everOk = true;
+  } catch (e) {
+    live.fails++;
+    if (!live.everOk && live.fails >= 3) { setMode("replay"); return; }
+  }
+  if (live.on) { drawLivePanel(); drawLiveMap(); }
+}
+function setMode(mode) {
+  const on = mode === "live" && LIVE_MAP != null;
+  live.on = on;
+  document.querySelector(".app").classList.toggle("is-live", on);
+  document.querySelectorAll("#mode button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === (on ? "live" : "replay"))));
+  $("lede").innerHTML = on ? "Bikes and free docks at Montreal's 100 busiest stations right now, straight from BIXI's live feed." : LEDE_REPLAY;
+  clearInterval(live.timer); clearInterval(live.ticker);
+  stop(); select(null);
+  try { history.replaceState(null, "", on ? "#live" : location.pathname + location.search); } catch (e) { /* file:// or sandbox */ }
+  if (on) {
+    live.fails = 0;
+    drawLivePanel(); drawLiveMap();
+    refreshLive();
+    live.timer = setInterval(refreshLive, 30000);
+    live.ticker = setInterval(drawLivePanel, 1000);
+  } else drawAll();
+}
+
+function sentence(r) {
+  const n = Math.round(r.f);
+  if (n === 0) return "Roughly balanced";
+  return `${n > 0 ? "Gains" : "Loses"} about ${Math.abs(n)} bike${Math.abs(n) === 1 ? "" : "s"}`;
+}
+function noForecastReason(s) {
+  if (!s.enough_data) return "Not enough data to forecast this station";
+  if (!s.in_service) return "Not in service this week (closed or moved since 2023)";
+  return "Out of service at this time";
+}
+function showTip({ index, x, y }) {
+  const tip = $("tip");
+  map.getCanvas().style.cursor = index >= 0 ? "pointer" : "";
+  if (index < 0) { tip.style.display = "none"; return; }
+  const s = stations[index];
+  if (live.on) {
+    const lr = live.readings.get(index);
+    tip.innerHTML = `<div class="t-name">${s.name}</div>` + (!lr
+      ? `<div class="t-sub">No live match for this station (renamed or moved since 2023)</div>`
+      : !lr.renting ? `<div class="t-sub">Offline: not renting bikes right now</div>`
+      : `<div>${lr.bikes} bike${lr.bikes === 1 ? "" : "s"}${lr.ebikes ? ` (${lr.ebikes} electric)` : ""}, ${lr.docks} free dock${lr.docks === 1 ? "" : "s"}</div>`
+        + (lr.reported ? `<div class="t-sub">Station last reported ${ago(Date.now() / 1000 - lr.reported)}</div>` : ""));
+    tip.style.display = "block"; tip.style.left = x + "px"; tip.style.top = y + "px";
+    return;
+  }
+  const r = reading(index);
+  tip.innerHTML = `<div class="t-name">${s.name}</div>` + (r
+    ? `<div>${sentence(r)} in the next ${state.h} h</div><div class="t-sub">Likely range ${signed(r.lo)} to ${signed(r.hi)}</div>`
+    : `<div class="t-sub">${noForecastReason(s)}</div>`);
+  tip.style.display = "block";
+  tip.style.left = x + "px"; tip.style.top = y + "px";
+}
+
+const TOP_K = 10;
+function drawActStock() {
+  // A week with real station counts: rank by the chance of being empty or full at the end (stock + forecast, plan/06).
+  const hr = state.hour, fc = F();
+  const rows = [];
+  fc.chance[hr].forEach((c, si) => { if (c != null) rows.push({ si, c }); });
+  rows.sort((a, b) => b.c - a.c || stations[a.si].id - stations[b.si].id);
+  const pick = rows.slice(0, TOP_K);
+  if (!pick.length) {
+    $("act-list").innerHTML = "";
+    let near = null;
+    for (let k = 1; k < N_HOURS && near == null; k++) for (const j of [hr + k, hr - k]) if (near == null && j >= 0 && j < N_HOURS && fc.chance[j].some((c) => c != null)) near = j;
+    $("act-intro").innerHTML = `The archive saved no station counts around ${hh(hr)} and ${hh(hr + state.h)}, so there is no list for this hour.` +
+      (near == null ? "" : ` <button class="linkish" id="act-jump">Jump to ${hh(near)}</button>`);
+    if (near != null) $("act-jump").onclick = () => setHour(near);
+    return;
+  }
+  let hits = 0;
+  $("act-list").innerHTML = pick.map(({ si, c }) => {
+    const o = fc.outcome[hr][si], b = fc.bikes[hr][si], d = fc.docks[hr][si];
+    if (o > 0) hits++;
+    const kind = o > 0 ? "yes" : "small";
+    const tag = o === 1 ? "Ran empty" : o === 2 ? "Filled up" : "Stayed OK";
+    return `<li class="${kind}"><button data-si="${si}"><span class="nm">${stations[si].name}</span>` +
+           `<span class="res">${Math.round(c * 100)}% chance<span class="tag ${kind}">${tag}</span></span>` +
+           `<span class="sm">Now: ${b} bike${b === 1 ? "" : "s"}, ${d} free dock${d === 1 ? "" : "s"}. Forecast: ${sentence(reading(si) || { f: 0 }).toLowerCase()}</span></button></li>`;
+  }).join("");
+  $("act-list").querySelectorAll("button").forEach((btn) => {
+    const si = +btn.dataset.si;
+    btn.onclick = () => select(si);
+    btn.onpointerenter = btn.onfocus = () => setHover(si);
+    btn.onpointerleave = btn.onblur = () => setHover(null);
+  });
+  state.hover = null;
+  $("act-info").innerHTML = `<p><b>What this is.</b> A dispatcher can only check a few stations. This week has real station counts, so the list uses what works best in testing: how many bikes and free docks a station has now, plus the forecast, turned into the chance it is empty or full by ${hh(hr + state.h)}.</p>
+    <dl>
+      <dt>Chance</dt><dd>How likely the station is to be empty or full at the end of the window, recalibrated on May to July 2025.</dd>
+      <dt>Now</dt><dd>Bikes and free docks at the start, from the archived station feed.</dd>
+      <dt>Ran empty, Filled up</dt><dd>It really was empty (or full) at the end: a good pick.</dd>
+      <dt>Stayed OK</dt><dd>It still had bikes and free docks: this pick was not needed.</dd>
+    </dl>
+    <p>The outcome includes what BIXI's trucks really did that week, so some stations were refilled before they emptied.</p>`;
+  $("act-intro").innerHTML = `The ${pick.length} stations most likely to be empty or full by ${hh(hr + state.h)}, from bikes now plus the forecast. ` +
+    `<span class="tally">${hits} of ${pick.length}</span> really were.`;
+}
+
+function drawAct() {
+  if (DATA.meta.has_stock) return drawActStock();
+  const hr = state.hour, cut = scale();
+  const rows = [];
+  F().forecast[hr].forEach((f, si) => { if (f != null) rows.push({ si, f }); });
+  // Biggest forecast first; ties go to the lower station id, as in the backtest.
+  rows.sort((a, b) => Math.abs(b.f) - Math.abs(a.f) || stations[a.si].id - stations[b.si].id);
+  const pick = rows.slice(0, TOP_K);
+  let caught = 0;
+  $("act-list").innerHTML = pick.map(({ si }) => {
+    const r = reading(si), a = r.actual, big = a != null && Math.abs(a) >= cut;
+    const right = big && Math.sign(Math.round(r.f)) === Math.sign(a);
+    if (right) caught++;
+    const kind = a == null ? "small" : right ? "yes" : big ? "wrong" : "small";
+    const tag = { yes: "Caught", wrong: "Wrong way", small: "Small move" }[kind];
+    const actual = a == null ? "no outcome" : `Actual ${signed(a)}`;
+    return `<li class="${kind}"><button data-si="${si}"><span class="nm">${stations[si].name}</span>` +
+           `<span class="res">${actual}<span class="tag ${kind}">${tag}</span></span>` +
+           `<span class="sm">Forecast: ${sentence(r).toLowerCase()} (${signed(r.lo)} to ${signed(r.hi)})</span></button></li>`;
+  }).join("");
+  $("act-list").querySelectorAll("button").forEach((b) => {
+    const si = +b.dataset.si;
+    b.onclick = () => select(si);
+    b.onpointerenter = b.onfocus = () => setHover(si);
+    b.onpointerleave = b.onblur = () => setHover(null);
+  });
+  state.hover = null;
+  $("act-info").innerHTML = `<p><b>What this is.</b> A dispatcher can only check a few stations. This is the model's shortlist: the 10 stations it expects to gain or lose the most bikes between ${hh(hr)} and ${hh(hr + state.h)}. Because this is a replay, we can also show what really happened and whether the shortlist was right.</p>
+    <dl>
+      <dt>Forecast</dt><dd>How many bikes the station is expected to gain or lose over the window, with a likely range around it.</dd>
+      <dt>Actual</dt><dd>The change that really happened over the same window: bikes arriving minus bikes leaving.</dd>
+      <dt>Cut-off</dt><dd>${cut} bikes. A move of at least this size counts as big for this look-ahead.</dd>
+      <dt>Caught</dt><dd>It really moved at least ${cut} bikes, in the direction the forecast said. A good pick.</dd>
+      <dt>Wrong way</dt><dd>It moved at least ${cut} bikes, but the opposite way. Right place, wrong direction.</dd>
+      <dt>Small move</dt><dd>It moved fewer than ${cut} bikes. The forecast expected more, so this pick was a miss.</dd>
+    </dl>
+    <p>Picks use the forecast size only, never the outcome. A big move is not the same as an empty or full station: it counts bikes moving, not how many are left.</p>`;
+  $("act-intro").innerHTML = `Its ${pick.length} largest forecasts for ${hh(hr)} to ${hh(hr + state.h)}. ` +
+    `<span class="tally">${caught} of ${pick.length}</span> were caught: they really moved ${cut} bikes or more, in the forecast direction.`;
+}
+$("act-info-btn").onclick = () => {
+  const open = $("act-info").hidden;
+  $("act-info").hidden = !open;
+  $("act-info-btn").setAttribute("aria-expanded", String(open));
+};
+function showTab(name) {
+  document.querySelectorAll(".tabbar button").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+  for (const t of ["act", "score", "stock"]) $(`tab-${t}`).hidden = t !== name;
+  document.querySelector(".panels").scrollTop = 0;
+  try { localStorage.setItem("bixi-tab", name); } catch (e) { /* storage blocked */ }
+}
+document.querySelectorAll(".tabbar button").forEach((b) => (b.onclick = () => showTab(b.dataset.tab)));
+document.querySelector(".tabbar").addEventListener("keydown", (e) => {
+  const order = ["act", "score", "stock"], cur = order.indexOf(document.querySelector('.tabbar [aria-selected="true"]').dataset.tab);
+  if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
+    const next = order[(cur + (e.key === "ArrowRight" ? 1 : 2)) % 3];
+    showTab(next); $(`t-${next}`).focus();
+  }
+});
+document.querySelector(".panels").addEventListener("click", (e) => { const g = e.target.closest("[data-goto]"); if (g) showTab(g.dataset.goto); });
+try { const t = localStorage.getItem("bixi-tab"); if (t) showTab(t); } catch (e) { /* storage blocked */ }
+{ const byHash = { "#where": "act", "#right": "score", "#empty": "stock" }; if (byHash[location.hash]) showTab(byHash[location.hash]); }   // deep links from the method page
+function setHover(si) { state.hover = si; drawMap(); }
+
+/* ---------- will it actually run empty? (real station counts, summer 2025) ---------- */
+function drawStock() {
+  const A = DATA.findings && DATA.findings.availability;
+  const tab = $("t-stock");
+  if (!A) { tab.hidden = true; return; }
+  const h = String(state.h), e = A.by_h[h].empty, f = A.by_h[h].full, t = A.truck[h];
+  const p1 = (x) => `${(x * 100).toFixed(1)}%`;
+  const sg = (x) => `${x >= 0 ? "+" : "−"}${Math.abs(x * 100).toFixed(1)}%`;
+  $("stock-a").innerHTML = `The model learns from trips, but BIXI's trucks also move bikes and trips never record them. Over ${state.h} h, ` +
+    `the real change in bikes at a station and the trip count agree only loosely: correlation <b>${t.corr.toFixed(2)}</b> (1 would be perfect). ` +
+    `In ${Math.round(t.gap5 * 100)}% of windows they differ by 5 bikes or more.`;
+  const top = (bins) => bins.filter((b) => b[2] >= 50).slice(-1)[0];
+  const raw = top(e.calibration.p_direct), cal = top(e.calibration.p_cal);
+  const bar = (label, v, real) => `<div class="row"><span>${label}</span><span class="track"><span class="fill${real ? " real" : ""}" style="display:block;width:${(v * 100).toFixed(1)}%"></span></span><span class="v">${Math.round(v * 100)}%</span></div>`;
+  $("stock-bars").innerHTML =
+    `<div><div class="grp">Read straight from the model</div>${bar("Said", raw[0])}${bar("Emptied", raw[1], true)}</div>` +
+    `<div><div class="grp">After correction</div>${bar("Said", cal[0])}${bar("Emptied", cal[1], true)}</div>`;
+  $("stock-b").textContent = `Its range was built for trips, so when it says a station is ${Math.round(raw[0] * 100)}% sure to empty, ` +
+    `only ${Math.round(raw[1] * 100)}% really do: trucks refill many of them. Corrected on May to July 2025, it is much closer to the truth, and cautious: it rarely says more than ${Math.round(cal[0] * 100 / 10) * 10}%.`;
+  const verb = (x) => x.verdict === "better" ? "does better" : x.verdict === "worse" ? "does worse" : "is no better";
+  const blocks = Object.entries(e.by_hour_block).sort((a, b) => b[1][0] - a[1][0]);
+  const when = blocks[0][0].replace("-", ":00 to ") + ":00";
+  $("stock-c").innerHTML = `Compared with knowing only how many bikes a station has now, the corrected chance ${verb(e)} for empty ` +
+    `(<b>${sg(e.skill[0])}</b>, ${sg(e.skill[1])} to ${sg(e.skill[2])}) and ${verb(f)} for full (<b>${sg(f.skill[0])}</b>) over ${state.h} h. ` +
+    `It helps most when the window starts ${when}.`;
+  const D = DATA.findings.decision_study && DATA.findings.decision_study.by_h[h];
+  if (D) {
+    const row = (label, v, real) => `<div class="row" style="grid-template-columns:104px 1fr 38px"><span>${label}</span><span class="track"><span class="fill${real ? " real" : ""}" style="display:block;width:${(v * 100 / 0.4).toFixed(1)}%"></span></span><span class="v">${Math.round(v * 100)}%</span></div>`;
+    $("stock-rank").innerHTML = row("Stock + forecast", D.precision.both[0], true) + row("Stock only", D.precision.stock[0]) +
+      row("Forecast size", D.precision.size[0]) + row("Random", D.precision.random[0]);
+    $("stock-d").textContent = `Share of 10 picks that really were empty or full ${state.h} h later. Picking by forecast size is ${D.precision.size[0] < D.precision.random[0] * 1.15 ? "about as good as" : "barely better than"} random; ` +
+      `picking the stations closest to empty or full now is far better, and the forecast adds ${D.both_vs_stock_verdict === "better" ? "a little more" : "a little, within the noise at this look-ahead"}.` + (DATA.meta.has_stock ? " This week, tab 1 uses the stock + forecast ranking." : " Switch to the 2025 week to see that ranking on the map.");
+  }
+  $("stock-note").textContent = `Scored on August and September 2025, ${A.matched} stations, stations not already empty or full. Past data, not a live test.`;
+}
+
+/* ---------- left column ---------- */
+function drawClock() {
+  const d = wall(state.hour);
+  $("day").textContent = fmt(new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }), d);
+  $("time").textContent = hh(state.hour);
+  $("window").textContent = `Forecast for ${hh(state.hour)} to ${hh(state.hour + state.h)}`;
+  const w = DATA.weather[state.h], t = w.temp[state.hour], p = w.precip[state.hour];
+  const ICON = {
+    temp: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.5 9.6V3a1.5 1.5 0 0 1 3 0v6.6a3 3 0 1 1-3 0z"/><path d="M8 11.5V6.5"/></svg>',
+    rain: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.2c2.2 3 3.6 5 3.6 6.8a3.6 3.6 0 0 1-7.2 0c0-1.8 1.4-3.8 3.6-6.8z"/></svg>',
+    dry: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="2.8"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg>',
+  };
+  $("weather").innerHTML = t == null ? "No weather forecast was available for this hour"
+    : `<span>Weather forecast</span><span class="wx">${ICON.temp}${Math.round(t)} °C</span>` +
+      (p >= 0.2 ? `<span class="wx">${ICON.rain}${p.toFixed(1)} mm rain</span>` : `<span class="wx">${ICON.dry}dry</span>`);
+}
+
+function drawHorizons() {
+  $("horizons").innerHTML = "";
+  for (const h of DATA.meta.horizons) {
+    const b = document.createElement("button");
+    b.textContent = `${h} hour${h > 1 ? "s" : ""}`;
+    b.setAttribute("aria-pressed", String(h === state.h));
+    b.onclick = () => { state.h = h; drawAll(); };
+    $("horizons").append(b);
+  }
+}
+
+function drawScore() {
+  const s = DATA.scorecard[state.h];
+  $("score-intro").textContent = `The list is only as good as the forecast behind it. Average miss, in bikes, on the 10% of windows with the biggest change (${Math.round(s.cutoff)}+ bikes in ${state.h} h). Tested on summers 2024 to 2026. Lower is better.`;
+  const rows = [["Predict zero", s.big_mae_zero], ["Last week", s.big_mae_last_week], ["Last 4 weeks", s.big_mae_avg4w],
+                ["Simple average", s.big_mae_l1], ["This model", s.big_mae_l2]];
+  const max = Math.max(...rows.map((r) => r[1]));
+  $("score-bars").innerHTML = rows.map(([name, v], i) =>
+    `<div class="bar-row${i === rows.length - 1 ? " ours" : ""}"><span>${name}</span><span class="track"><div class="fill" style="width:${(100 * v / max).toFixed(1)}%"></div></span><span class="num">${v.toFixed(1)}</span></div>`).join("");
+  $("score-facts").innerHTML =
+    (() => { const k = Math.round(100 * s.big_skill_l2_vs_best_simple); return k > 0 ? `<li><b>${k}%</b> less error than the best simple method above</li>` : k < 0 ? `<li><b>${-k}%</b> more error than the best simple method above</li>` : `<li>The same error as the best simple method above</li>`; })() +
+    `<li><b>${Math.round(100 * s.big_direction_l2)}%</b> of the time it gets the direction right on them</li>` +
+    `<li>The 80% range held the outcome <b>${Math.round(100 * s.coverage_l2)}%</b> of the time, over all windows</li>`;
+}
+
+
+/* ---------- week strip ---------- */
+function drawStrip() {
+  const totals = F().forecast.map((row) => row.reduce((a, v) => a + (v == null ? 0 : Math.abs(v)), 0));
+  const max = Math.max(...totals), H = 52;
+  const svg = $("bars");
+  svg.setAttribute("viewBox", `0 0 ${N_HOURS} ${H}`);
+  svg.innerHTML = totals.map((v, i) => {
+    const h = Math.max(1, (v / max) * (H - 4));
+    const on = i === state.hour;
+    return `<rect x="${i + 0.12}" y="${H - h}" width="0.76" height="${h}" fill="${on ? "#16191d" : "#c9c7bf"}"/>`;
+  }).join("") + `<rect x="${state.hour + 0.44}" y="0" width="0.12" height="${H}" fill="#16191d"/>`;
+  $("scrub").value = state.hour;
+}
+function buildDays() {
+  $("days").innerHTML = Array.from({ length: N_HOURS / 24 }, (_, d) =>
+    `<span>${fmt(new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", timeZone: "UTC" }), wall(d * 24))}</span>`).join("");
+  const f = new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+  $("week-range").textContent = `${fmt(new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", timeZone: "UTC" }), wall(0))} to ${fmt(f, wall(N_HOURS - 1))}`;
+}
+function setHour(i) {
+  state.hour = Math.max(0, Math.min(N_HOURS - 1, i));
+  $("tip").style.display = "none";
+  drawClock(); drawAct(); drawStrip(); drawMap(); drawStation();
+}
+$("scrub").addEventListener("input", (e) => { stop(); setHour(+e.target.value); });
+
+function stop() { state.playing = false; clearInterval(stop.timer); $("play-icon").innerHTML = '<path d="M4 2.5v11l9-5.5z"/>'; $("play").setAttribute("aria-label", "Play the week"); }
+$("play").onclick = () => {
+  if (state.playing) return stop();
+  state.playing = true;
+  $("play-icon").innerHTML = '<path d="M3.5 2.5h3.2v11H3.5zM9.3 2.5h3.2v11H9.3z"/>';
+  $("play").setAttribute("aria-label", "Pause");
+  stop.timer = setInterval(() => setHour((state.hour + 1) % N_HOURS), 650);
+};
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") select(null);
+  if (e.target.matches?.("input")) return;
+  if (e.key === "ArrowRight") { stop(); setHour(state.hour + 1); }
+  if (e.key === "ArrowLeft") { stop(); setHour(state.hour - 1); }
+});
+
+/* ---------- station sheet ---------- */
+const view = { start: 0, span: N_HOURS };       // which hours the chart shows
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const VIOLET = "#7a46c9";
+
+function select(index) {
+  const opening = index != null && state.selected == null;
+  state.selected = index;
+  $("tip").style.display = "none";
+  if (opening) { view.start = 0; view.span = N_HOURS; }
+  drawMap(); drawStation();
+  if (opening) $("close").focus();
+}
+$("close").onclick = () => select(null);
+$("veil").addEventListener("pointerdown", (e) => { if (e.target === $("veil")) select(null); });
+
+function setView(start, span) {
+  view.span = clamp(span, 12, N_HOURS);
+  view.start = clamp(start, 0, N_HOURS - view.span);
+  drawChart();
+}
+const centreOn = (span) => setView(state.hour + 0.5 - span / 2, span);
+document.querySelectorAll(".zoom [data-span]").forEach((b) => (b.onclick = () => centreOn(+b.dataset.span)));
+$("zoom-in").onclick = () => setView(view.start + view.span * 0.2, view.span * 0.6);
+$("zoom-out").onclick = () => setView(view.start - view.span * 0.33, view.span / 0.6);
+
+function drawStation() {
+  const veil = $("veil");
+  if (state.selected == null) { veil.hidden = true; return; }
+  veil.hidden = false;
+  const s = stations[state.selected], r = reading(state.selected);
+  $("s-name").textContent = s.name;
+  $("s-sub").textContent = `${fmt(new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }), wall(state.hour))}, ${hh(state.hour)}. Busiest station no. ${s.rank}` + (s.capacity ? `, ${s.capacity} docks today.` : ".");
+  if (!r) {
+    $("s-dot").style.background = "transparent"; $("s-dot").style.boxShadow = "inset 0 0 0 1.5px #8b8f95";
+    $("s-verdict").textContent = "No forecast";
+    $("s-range").textContent = noForecastReason(s) + ".";
+    $("s-happened").textContent = "";
+  } else {
+    const c = colour(r);
+    $("s-dot").style.boxShadow = "none";
+    $("s-dot").style.background = `rgba(${c[0]},${c[1]},${c[2]},${(c[3] / 255).toFixed(2)})`;
+    $("s-verdict").textContent = `${sentence(r)} from ${hh(state.hour)} to ${hh(state.hour + state.h)}`;
+    const clear = r.lo > 0 || r.hi < 0;
+    $("s-range").textContent = `Likely range ${signed(r.lo)} to ${signed(r.hi)}. ${clear ? "The direction is clear." : "It could go either way."}`;
+    const inside = r.actual >= r.lo && r.actual <= r.hi;
+    $("s-happened").textContent = `What happened: ${signed(r.actual)}, ${inside ? "inside" : "outside"} the range.`;
+  }
+  // One chip per look-ahead, showing this station's forecast at this hour.
+  $("s-chips").innerHTML = "";
+  for (const h of DATA.meta.horizons) {
+    const v = DATA.forecasts[h].forecast[state.hour][state.selected];
+    const b = document.createElement("button");
+    b.className = "chip"; b.setAttribute("aria-pressed", String(h === state.h));
+    b.innerHTML = `<small>Next ${h} h</small><strong>${v == null ? "–" : signed(v)}</strong>`;
+    b.onclick = () => { state.h = h; drawAll(); };
+    $("s-chips").append(b);
+  }
+  // How the week went at this station, for this look-ahead.
+  const si = state.selected; let n = 0, held = 0, miss = 0, missZero = 0;
+  for (let i = 0; i < N_HOURS; i++) {
+    const f = F().forecast[i][si]; if (f == null) continue;
+    const y = F().actual[i][si];
+    n++; held += y >= F().low[i][si] && y <= F().high[i][si]; miss += Math.abs(y - f); missZero += Math.abs(y);
+  }
+  $("s-week").innerHTML = n ? `This week here: the range held <b>${held} of ${n}</b> hours (${Math.round(100 * held / n)}%). Average miss <b>${(miss / n).toFixed(1)}</b> bikes; predicting zero would miss ${(missZero / n).toFixed(1)}.` : "";
+  if (state.hour < view.start || state.hour >= view.start + view.span) view.start = clamp(state.hour + 0.5 - view.span / 2, 0, N_HOURS - view.span);
+  drawChart();
+}
+
+const CH = { W: 980, H: 380, L: 52, R: 16, T: 30, B: 40 };
+function drawChart(hover = null) {
+  if (state.selected == null) return;
+  const si = state.selected, { W, H, L, R, T, B } = CH;
+  const col = (name) => F()[name].map((row) => row[si]);
+  const f = col("forecast"), lo = col("low"), hi = col("high"), ac = col("actual");
+  const svg = $("chart");
+  document.querySelectorAll(".zoom [data-span]").forEach((b) => b.setAttribute("aria-pressed", String(Math.abs(view.span - +b.dataset.span) < 0.5)));
+  const i0 = Math.max(0, Math.floor(view.start) - 1), i1 = Math.min(N_HOURS - 1, Math.ceil(view.start + view.span));
+  const seen = [];
+  for (let i = i0; i <= i1; i++) if (f[i] != null) seen.push(lo[i], hi[i], ac[i]);
+  if (!seen.length) { svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle">No forecasts for this station in this period</text>`; return; }
+  // Zero stays in the middle. The scale follows what is on screen, so zooming in also zooms the bikes axis.
+  const top = Math.max(4, Math.max(...seen.map(Math.abs)) * 1.12);
+  const step = [1, 2, 5, 10, 20, 50, 100, 200, 500].find((v) => top / v <= 3.4) ?? 1000;
+  const x = (i) => L + ((i + 0.5 - view.start) / view.span) * (W - L - R);
+  const xEdge = (hr) => L + ((hr - view.start) / view.span) * (W - L - R);
+  const y = (v) => T + (1 - (v + top) / (2 * top)) * (H - T - B);
+  let g = `<defs><clipPath id="plot"><rect x="${L}" y="${T}" width="${W - L - R}" height="${H - T - B}"/></clipPath></defs>`;
+  // Tinted halves, same colours as the map: blue above zero (gains), red below (loses).
+  g += `<rect x="${L}" y="${T}" width="${W - L - R}" height="${y(0) - T}" fill="rgba(47,111,222,.07)"/>`;
+  g += `<rect x="${L}" y="${y(0)}" width="${W - L - R}" height="${H - B - y(0)}" fill="rgba(216,73,43,.07)"/>`;
+  g += `<text x="${L + 8}" y="${T + 16}">Gains bikes</text><text x="${L + 8}" y="${H - B - 8}">Loses bikes</text>`;
+  for (let v = -Math.floor(top / step) * step; v <= top; v += step) {
+    g += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="${v === 0 ? "#6d7178" : "rgba(22,25,29,.08)"}" stroke-width="${v === 0 ? 1.2 : 1}"/>`;
+    g += `<text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v > 0 ? "+" : v < 0 ? "−" : ""}${Math.abs(v)}</text>`;
+  }
+  // Time axis: days always, hours once zoomed in.
+  const tick = view.span <= 30 ? 3 : view.span <= 80 ? 6 : view.span <= 120 ? 12 : 24;
+  const dayFmt = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: view.span <= 80 ? "short" : undefined, timeZone: "UTC" });
+  for (let hr = Math.ceil(view.start / tick) * tick; hr <= view.start + view.span; hr += tick) {
+    const gx = xEdge(hr), midnight = hr % 24 === 0;
+    g += `<line x1="${gx}" x2="${gx}" y1="${T}" y2="${H - B}" stroke="rgba(22,25,29,${midnight ? 0.22 : 0.07})"/>`;
+    if (hr >= N_HOURS) continue;
+    if (midnight) g += `<text class="strong" x="${gx + 5}" y="${H - 8}">${fmt(dayFmt, wall(hr))}</text>`;
+    if (tick < 24) g += `<text x="${gx + 5}" y="${H - 23}">${hh(hr)}</text>`;
+  }
+  // Split into runs so gaps (out of service) stay gaps.
+  const runs = []; let run = [];
+  for (let i = i0; i <= i1; i++) { if (f[i] == null) { if (run.length) runs.push(run); run = []; } else run.push(i); }
+  if (run.length) runs.push(run);
+  let plot = "";
+  for (const r of runs) {
+    plot += `<path d="M${r.map((i) => `${x(i)},${y(hi[i])}`).join("L")}L${[...r].reverse().map((i) => `${x(i)},${y(lo[i])}`).join("L")}Z" fill="rgba(22,25,29,.13)"/>`;
+    plot += `<path d="M${r.map((i) => `${x(i)},${y(f[i])}`).join("L")}" fill="none" stroke="#16191d" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+  }
+  const big = view.span <= 80;
+  for (let i = i0; i <= i1; i++) {
+    if (f[i] == null) continue;
+    const out = ac[i] < lo[i] || ac[i] > hi[i];
+    plot += out ? `<circle cx="${x(i)}" cy="${y(ac[i])}" r="${big ? 4.5 : 3.2}" fill="${VIOLET}" stroke="#fbfaf7" stroke-width="1.2"/>`
+                : `<circle cx="${x(i)}" cy="${y(ac[i])}" r="${big ? 3.6 : 2.4}" fill="#fbfaf7" stroke="${VIOLET}" stroke-width="1.6"/>`;
+  }
+  g += `<g clip-path="url(#plot)">${plot}</g>`;
+  // The hour the map is showing.
+  if (state.hour + 1 > view.start && state.hour < view.start + view.span) {
+    const sx = x(state.hour);
+    g += `<line x1="${sx}" x2="${sx}" y1="${T - 6}" y2="${H - B}" stroke="#16191d" stroke-width="1.5"/>`;
+    g += `<text class="strong" x="${clamp(sx, L + 40, W - R - 40)}" y="${T - 12}" text-anchor="middle">${WD[wall(state.hour).getUTCDay()]} ${hh(state.hour)}</text>`;
+    if (f[state.hour] != null) g += `<circle cx="${sx}" cy="${y(f[state.hour])}" r="5.5" fill="#16191d" stroke="#fbfaf7" stroke-width="2"/>`;
+  }
+  const tip = $("chart-tip");
+  if (hover != null && hover >= view.start - 1 && hover < view.start + view.span) {
+    const hx = x(hover);
+    g += `<line x1="${hx}" x2="${hx}" y1="${T}" y2="${H - B}" stroke="#16191d" stroke-width="1" stroke-dasharray="3 4"/>`;
+    const when = `<b>${WD[wall(hover).getUTCDay()]} ${hh(hover)} to ${hh(hover + state.h)}</b>`;
+    if (f[hover] == null) tip.innerHTML = `${when}<br><span class="muted">No forecast (out of service)</span>`;
+    else {
+      const out = ac[hover] < lo[hover] || ac[hover] > hi[hover];
+      tip.innerHTML = `${when}<br>Forecast ${signed(f[hover])} <span class="muted">(${signed(lo[hover])} to ${signed(hi[hover])})</span><br>Happened ${signed(ac[hover])} <span class="muted">${out ? "outside the range" : "inside the range"}</span>`;
+    }
+    tip.style.display = "block";
+    const frac = hx / W, box = svg.getBoundingClientRect();
+    tip.style.left = frac < 0.62 ? `${frac * box.width + 14}px` : "auto";
+    tip.style.right = frac < 0.62 ? "auto" : `${(1 - frac) * box.width + 14}px`;
+  } else tip.style.display = "none";
+  svg.innerHTML = g;
+}
+
+/* zoom with the wheel, pan by dragging, click to jump */
+const chartEl = $("chart");
+function hourAt(e) {
+  const box = chartEl.getBoundingClientRect(), { W, L, R } = CH;
+  const px = ((e.clientX - box.left) / box.width) * W;
+  return view.start + ((px - L) / (W - L - R)) * view.span;
+}
+let drag = null;
+chartEl.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, start: view.start, moved: false }; chartEl.setPointerCapture(e.pointerId); });
+chartEl.addEventListener("pointermove", (e) => {
+  if (drag) {
+    const box = chartEl.getBoundingClientRect(), dx = e.clientX - drag.x;
+    if (Math.abs(dx) > 4) { drag.moved = true; chartEl.classList.add("dragging"); }
+    if (drag.moved) { setView(drag.start - (dx / (box.width * (CH.W - CH.L - CH.R) / CH.W)) * view.span, view.span); return; }
+  }
+  drawChart(clamp(Math.floor(hourAt(e)), 0, N_HOURS - 1));
+});
+chartEl.addEventListener("pointerup", (e) => {
+  const wasClick = drag && !drag.moved;
+  drag = null; chartEl.classList.remove("dragging");
+  if (wasClick) { stop(); setHour(clamp(Math.floor(hourAt(e)), 0, N_HOURS - 1)); }
+});
+chartEl.addEventListener("pointerleave", () => { if (!drag) drawChart(); });
+chartEl.addEventListener("wheel", (e) => {
+  e.preventDefault();
+  const anchor = hourAt(e), span = clamp(view.span * Math.exp(e.deltaY * 0.0018), 12, N_HOURS);
+  setView(anchor - (anchor - view.start) * (span / view.span), span);
+}, { passive: false });
+chartEl.addEventListener("dblclick", () => setView(0, N_HOURS));
+
+/* ---------- go ---------- */
+function drawAll() { $("tip").style.display = "none"; drawHorizons(); drawClock(); drawAct(); drawStock(); drawScore(); drawStrip(); drawMap(); drawStation(); }
+window.bixi.state = state;
+(function buildWeeks() {
+  const nav = $("weeks"), list = DATA.weeks || [];
+  if (list.length < 2) { nav.hidden = true; return; }
+  const fmtD = (iso) => { const [y, m, d] = iso.split("-").map(Number); const a = new Date(Date.UTC(y, m - 1, d)), b = new Date(Date.UTC(y, m - 1, d + 6));
+    const mo = (x) => x.toLocaleString("en-GB", { month: "short", timeZone: "UTC" });
+    return `${a.getUTCDate()}${mo(a) === mo(b) ? "" : " " + mo(a)} to ${b.getUTCDate()} ${mo(b)} ${b.getUTCFullYear()}`; };
+  nav.innerHTML = list.map((w) => `<a href="?${w.stock ? "week=" + w.id : ""}${location.hash}" aria-current="${String(w.id === DATA.meta.week)}">` +
+    `${fmtD(w.start)}<small>${w.stock ? "with real station counts" : "latest published trips"}</small></a>`).join("");
+  if (DATA.meta.has_stock) $("act-note").innerHTML = "This week has real station counts, so the list ranks by bikes now plus the forecast, the method that worked best in testing.";
+})();
+buildDays();
+drawAll();
+// Live mode is hidden until a live forecast exists to sit beside it (plan/03-system-design.md, stage 3).
+// Open the page with #live to use it.
+if (LIVE_MAP && location.hash === "#live") {
+  $("mode-section").hidden = false;
+  document.querySelectorAll("#mode button").forEach((b) => (b.onclick = () => setMode(b.dataset.mode)));
+  if (location.hash === "#live") setMode("live");
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "maplibre": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "maplibre-mcp@0.9.2"
+      ],
+      "env": {}
+    }
+  }
+}

@@ -1,0 +1,42 @@
+# ---- Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# ---- Node (the map's libraries are built once into web/vendor, which IS committed)
+web/node_modules/
+
+# ---- macOS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# ---- Data: far too large for git (10 GB raw, 1.3 GB intermediate). See data/README.md for how to get it.
+data/raw/*
+data/interim/*
+data/processed/*
+# ...except the small, useful outputs and the folder markers
+!data/raw/.gitkeep
+!data/interim/.gitkeep
+!data/processed/.gitkeep
+!data/processed/top_stations.csv
+
+# ---- Private notes and plans (kept locally, not published)
+docs/PROJECT_GUIDE.md
+docs/HOW_THIS_IS_DIFFERENT.md
+docs/station-sheet.png
+plan/
+
+# ---- Run logs (the numbers worth keeping are in reports/*.md and reports/*.json)
+*.log
+
+# ---- Secrets and local settings, in case any are ever added
+.env
+.env.*
+.claude/settings.local.json
+
+# live logger output (raw polls), top-level folder only; the logger code in src/live/ is committed
+/live/

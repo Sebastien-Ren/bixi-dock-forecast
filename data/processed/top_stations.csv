@@ -1,0 +1,101 @@
+station_id,summer_trips,rank,name,lat,lon,n_names,all_names,spread_m,train_days,enough_data
+525,208180.0,1,de la Commune / Place Jacques-Cartier,45.50761,-73.551836,1,de la Commune / Place Jacques-Cartier,0.0,308,True
+978,199733.0,2,Marquette / du Mont-Royal,45.53225126153355,-73.5754351576917,1,Marquette / du Mont-Royal,7.958880000327099,308,True
+704,183481.0,3,du Mont-Royal / Clark,45.51940999999999,-73.58685,1,du Mont-Royal / Clark,0.0,308,True
+273,176285.0,4,Métro Atwater (Atwater / Ste-Catherine ),45.489495727247245,-73.58453817818447,3,Métro Atwater (Atwater / Ste-Catherine) | Métro Atwater (Atwater / Ste-Catherine ) | Métro Atwater ( Atwater / Ste-Catherine ),33.700907678746034,308,True
+873,172989.0,5,Boyer / du Mont-Royal,45.52744005546579,-73.57992730043165,1,Boyer / du Mont-Royal,6.742940000255203,308,True
+981,162881.0,6,Laurier / de Brébeuf,45.53252383192175,-73.58473719627537,3,Laurier / de Brébeuf | Laurier / Brébeuf | Brébeuf / Laurier,25.09257999948204,308,True
+483,161183.0,7,de la Commune / St-Sulpice,45.504242,-73.5534693996271,1,de la Commune / St-Sulpice,0.07801136016996679,308,True
+561,155324.0,8,Métro St-Laurent (de Maisonneuve / St-Laurent),45.51074095364263,-73.56506239968395,6,Métro St-Laurent (de Maisonneuve / St-Laurent) | Métro St-Laurent ( de Maisonneuve / St-Laurent) | Métro St-Laurent 2 ( de Maisonneuve / St-Laurent) | Métro St-Laurent dépôt 2 (de Maisonneuve / St-Laurent) | Métro St-Laurent Dépôt ( de Maisonneuve / St-Laurent) | Dépôt Festivals ( de Maisonneuve / St-Laurent),32.53073727287227,308,True
+457,152661.0,9,de Maisonneuve / Mansfield (nord),45.50222423145047,-73.57337494015316,5,de Maisonneuve / Mansfield (sud) | de Maisonneuve / Mansfield (sud-est) | de Maisonneuve / Mansfield (nord) | REM McGill (de Maisonneuve / Mansfield) | de Maisonneuve / Mansfield SE,61.79186000029188,308,True
+434,144615.0,10,Métro Peel (de Maisonneuve / Stanley),45.50038,-73.57507,1,Métro Peel (de Maisonneuve / Stanley),0.0,308,True
+386,142664.0,11,de la Commune / King,45.49751185268849,-73.5526837038314,1,de la Commune / King,21.375112740865916,308,True
+368,140566.0,12,de Maisonneuve / Mackay,45.49667843445955,-73.57897536652003,4,Mackay / de Maisonneuve | de Maisonneuve / Mackay | Mackay / de Maisonneuve (sud) | Mackay / de Maisonneuve (nord),47.1188616612219,308,True
+509,138138.0,13,University / Milton,45.506525276613175,-73.57654217104918,2,University / Milton | Milton / University,20.594999136949923,308,True
+467,135781.0,14,McTavish / Sherbrooke,45.50279143059238,-73.57594821559485,1,McTavish / Sherbrooke,10.141476847580918,308,True
+906,133479.0,15,du Mont-Royal / de Brébeuf,45.52933211856659,-73.57802037678238,3,de Brébeuf / du Mont-Royal | du Mont-Royal / de Brébeuf | du Mont-Royal /de Brébeuf,23.793464911674846,308,True
+335,133107.0,16,Peel / Ottawa,45.4942,-73.559985,1,Peel / Ottawa,0.0,293,True
+684,129556.0,17,St-Dominique / Rachel,45.51860069408171,-73.58156371257655,1,St-Dominique / Rachel,2.1002599994100137,308,True
+619,129206.0,18,Parc Jeanne-Mance (monument sir George-Étienne-Cartier),45.514859411585356,-73.58481625530301,3,Parc Jeanne-Mance (monument sir George-Étienne-Cartier) | Parc Jeanne-Mance (monument à sir George-Étienne Cartier) | Parc Jeanne Mance (monument sir George-Etienne Cartier),8.65926099991907,306,True
+557,128805.0,19,Prince-Arthur / du Parc,45.51052871512967,-73.57553265395886,1,Prince-Arthur / du Parc,16.028300000374998,276,True
+559,127705.0,20,de la Commune / Berri,45.5107744448892,-73.54993180738555,2,de la Commune / Berri | de la Commune / Bonneau,28.07715999980104,308,True
+347,126764.0,21,Guy / Sainte-Catherine,45.49498523410704,-73.57777762737695,3,Guy / Sainte-Catherine | Métro Guy-Concordia (Guy / St-Catherine) | Sainte-Catherine / Guy,24.539880000092126,308,True
+283,126529.0,22,des Bassins / du Séminaire,45.490456617495745,-73.56018181217846,1,des Bassins / du Séminaire,3.9785793786406884,308,True
+591,126415.0,23,Clark / Prince-Arthur,45.51332684941528,-73.57299379294601,1,Clark / Prince-Arthur,4.421599999832608,308,True
+1017,126128.0,24,Chabot / du Mont-Royal,45.534145986272,-73.57354342080558,2,Chabot / du Mont-Royal | Chabot / Mont-Royal,5.63753999990422,308,True
+649,125845.0,25,St-André / Ste-Catherine,45.51635608046742,-73.55805592409051,1,St-André / Ste-Catherine,14.259660000127838,305,True
+795,125805.0,26,St-Dominique / Laurier,45.52363864911388,-73.59250167054843,1,St-Dominique / Laurier,10.609545009708881,308,True
+813,125292.0,27,Rivard / du Mont-Royal,45.52463897145653,-73.58258057016256,3,Métro Mont-Royal (Rivard / du Mont-Royal) | Rivard / du Mont-Royal | Rivard / Mont-Royal,12.601559999601477,154,True
+574,124909.0,28,Parc Jean-Drapeau (Chemin Mac Donald),45.51258646351517,-73.53176601218728,4,Parc Jean-Drapeau (Chemin Macdonald) | Parc Jean-Drapeau (Chemin MacDonald) | Parc Jean-Drapeau (Chemin Mac Donald) | Métro Jean-Drapeau,93.45760971963591,305,True
+829,123359.0,29,Resther / du Mont-Royal,45.52561766871613,-73.58174960226047,1,Resther / du Mont-Royal,4.602670261108415,308,True
+316,120103.0,30,Smith / Peel,45.49276399604472,-73.55637647448526,2,Smith / Peel | Bassin Peel (Smith / de la Commune),13.043720000056055,308,True
+1192,120083.0,31,Parc du Pélican (1ère avenue / Masson),45.54519339223225,-73.57644659482149,3,Parc du Pélican (1ère avenue / Masson) | Parc du Pélican (1ere Ave / Masson) | Parc du Pélican (1ère Ave / Masson),1.3264799997928094,306,True
+1041,117820.0,32,de Châteaubriand / Beaubien,45.53534857066357,-73.60356642398146,2,Métro Beaubien (de Chateaubriand / Beaubien) | de Châteaubriand / Beaubien,13.105908541795998,308,True
+645,113114.0,33,du Square-St-Louis / Laval,45.51608887809747,-73.57013967441952,4,Square St-Louis (du Square St-Louis / Laval) | du Square Saint-Louis / Laval | du Square-St-Louis / Laval | Square Saint-Louis,4.974300000008043,308,True
+930,111851.0,34,de Lanaudière / du Mont-Royal,45.53015175959362,-73.57693709941077,2,de Lanaudière / du Mont-Royal | de Lanaudière / Mont-Royal,14.701819999796953,308,True
+660,111257.0,35,Parc Jeanne-Mance (du Mont-Royal / du Parc),45.51696722856571,-73.58904438489813,2,Parc Jeanne-Mance (du Mont-Royal / du Parc) | Parc Jeanne-Mance (du Mont-Royal/du Parc),11.385620000315157,308,True
+697,110846.0,36,Berri / Cherrier,45.519195235974315,-73.56938128074971,1,Berri / Cherrier,19.676119999804996,308,True
+202,110103.0,37,Marché Atwater,45.480208,-73.577599,1,Marché Atwater,0.0,308,True
+670,109875.0,38,Clark / Rachel,45.517463866479176,-73.58230070389642,1,Clark / Rachel,22.311249065121615,308,True
+576,108774.0,39,Milton / Clark,45.5125436192725,-73.57066959378122,1,Milton / Clark,6.396931550558357,292,True
+696,107190.0,40,Roy / St-Denis,45.519088656317166,-73.57269299250515,1,Roy / St-Denis,2.3213399996373028,308,True
+1060,104314.0,41,Parthenais / du Mont-Royal,45.53637964619277,-73.5713697509975,1,Parthenais / du Mont-Royal,8.035170118560046,308,True
+320,103272.0,42,de la Montagne / Notre-Dame,45.49294435694504,-73.56472314140393,2,de la Montagne / Notre-Dame | Notre-Dame / de la Montagne,12.82263999982888,308,True
+827,102934.0,43,du Parc-La Fontaine / Rachel,45.525495564508915,-73.57427194274725,3,du Parc-Lafontaine / Rachel | du Parc-La Fontaine / Rachel | Rachel / du Parc-Lafontaine,7.185099999924432,308,True
+722,102278.0,44,Jeanne-Mance / Laurier,45.52021248710819,-73.59507610641226,1,Jeanne-Mance / Laurier,18.566703766990486,308,True
+804,101794.0,45,Bernard / Jeanne-Mance,45.52428023591181,-73.60495605402494,2,Bernard / Jeanne-Mance | Jeanne-Mance / Van Horne,15.47560000019962,308,True
+254,101202.0,46,Richmond / des Bassins,45.48751118201838,-73.5650163144389,1,Richmond / des Bassins,4.311060000111411,308,True
+478,99423.0,47,Ste-Catherine / Union,45.50368854480376,-73.56948054530054,1,Ste-Catherine / Union,12.559829018389898,308,True
+701,99200.0,48,Henri-Julien / Duluth,45.519334932290484,-73.57705515829286,2,Laval / Duluth | Henri-Julien / Duluth,57.038639999725774,308,True
+531,99140.0,49,Métro Place-des-Arts (du Président-Kennedy / Jeanne-Mance),45.508201514606114,-73.56881846130416,1,Métro Place-des-Arts (du Président-Kennedy / Jeanne-Mance),2.7634999993063047,308,True
+1035,98543.0,50,Marquette / Laurier,45.535418728995445,-73.58218696335832,1,Marquette / Laurier,23.98717999991686,308,True
+544,98105.0,51,Milton / du Parc,45.509363103819744,-73.57386112104571,1,Milton / du Parc,5.195380000235303,308,True
+304,98023.0,52,Chomedey / de Maisonneuve,45.49177079016287,-73.5839703639987,1,Chomedey / de Maisonneuve,5.5269999993981855,308,True
+330,97878.0,53,Ste-Catherine / St-Mathieu,45.49381764758549,-73.57916196314174,2,Ste-Catherine / St-Mathieu | St-Mathieu / Ste-Catherine,18.460180000518676,308,True
+461,96979.0,54,Square-Victoria (Viger),45.50207342239167,-73.56294516793899,4,Square Victoria (Viger / du Square-Victoria) | Square-Victoria (Viger / du Square-Victoria) | Square-Victoria (Viger) | Square-Victoria (Viger/du Square-Victoria),2.763500000091767,308,True
+775,96717.0,55,Berri / Rachel,45.52273995998655,-73.57723442578693,1,Berri / Rachel,3.5105112165128958,308,True
+1178,96650.0,56,Aylwin / Ontario,45.544289450590995,-73.54531221856797,1,Aylwin / Ontario,32.296703192362884,308,True
+159,96360.0,57,de Marlowe / de Maisonneuve,45.4739464618203,-73.60456825869161,6,Métro Vendôme (de Marlowe / de Maisonneuve) | Métro Vendôme (Marlowe / de Maisonneuve) | de Marlowe / de Maisonneuve | Métro Vendôme (de Maisonneuve / de Vendôme) | Métro Vendôme (de Maisonneuve / Grey) | Métro Vendôme  (de Maisonneuve / Grey),97.98226862057527,308,True
+628,95799.0,58,des Pins / St-Laurent,45.515228,-73.575096,1,des Pins / St-Laurent,0.0,154,True
+678,95452.0,59,Métro Sherbrooke (de Rigaud / Berri),45.51814231571073,-73.5680283784209,2,Métro Sherbrooke (de Rigaud / Berri) | Métro Sherbrooke (de Rigaud / St-Denis),32.388219999912735,308,True
+400,95372.0,60,Crescent / de Maisonneuve,45.49811650609519,-73.57760432741713,3,Crescent / de Maisonneuve | Crescent / de Maisonneuve N/E | Bishop / de Maisonneuve S/E,2.2107999999163894,289,True
+654,95337.0,61,St-Dominique / Napoléon,45.516664,-73.57722,1,St-Dominique / Napoléon,0.0,308,True
+860,94644.0,62,Dorion / Ontario,45.52699141845837,-73.5582123487153,1,Dorion / Ontario,1.9897199996889867,308,True
+769,93394.0,63,Drolet / Marie-Anne,45.522403,-73.581177,1,Drolet / Marie-Anne,0.0,308,True
+530,93254.0,64,Milton / Durocher,45.508143138301875,-73.57492697878638,2,Milton / Durocher | Milton / Durocher (est),17.133699999940433,308,True
+149,93009.0,65,Sir-Georges-Etienne-Cartier / Léa-Roback,45.471697428473774,-73.5826551615095,2,Léa-Roback / Sir-Georges-Etienne-Cartier | Sir-Georges-Etienne-Cartier / Léa-Roback,42.33681999992859,308,True
+627,92808.0,66,Duluth / de l'Esplanade,45.51511675793352,-73.58108877044295,1,Duluth / de l'Esplanade,6.708976991237705,308,True
+825,92719.0,67,Clark / St-Viateur,45.52518094255718,-73.59931413937448,1,Clark / St-Viateur,8.503238279579364,308,True
+867,92599.0,68,Émile-Duployé / Sherbrooke,45.52719673765728,-73.56458479073791,1,Émile-Duployé / Sherbrooke,15.836306154393299,295,True
+1073,91870.0,69,Boyer / Beaubien,45.537041,-73.602026,1,Boyer / Beaubien,0.0,308,True
+778,91052.0,70,Jeanne-Mance / St-Viateur,45.52301285566684,-73.60185716891114,1,Jeanne-Mance / St-Viateur,4.200519999605376,308,True
+877,90962.0,71,Métro Laurier (Berri / Laurier),45.52759351442811,-73.58908252084062,2,Métro Laurier (Berri / Laurier) | Métro Laurier (Rivard / Laurier),3.0424430543853305,264,True
+790,90860.0,72,Métro Papineau (Cartier / Ste-Catherine),45.52353000000001,-73.55199,1,Métro Papineau (Cartier / Ste-Catherine),0.0,205,True
+535,90016.0,73,Aylmer / Prince-Arthur,45.508565471216606,-73.57768741611491,1,Aylmer / Prince-Arthur,28.084089732103735,308,True
+527,89945.0,74,Complexe Desjardins (St-Urbain / René-Lévesque),45.50787012133535,-73.56314625149,2,Complexe Desjardins (St-Urbain / René-Lévesque) | St-Urbain / René-Lévesque,5.195380000235303,308,True
+1268,89876.0,75,10e avenue / Masson,45.550343616573564,-73.57353920532003,2,10e avenue / Masson | 10e Avenue / Masson,31.906646390404717,308,True
+911,89821.0,76,St-Dominique / de Bellechasse,45.52951594109194,-73.6048786469622,2,St-Dominique / de Bellechasse | Henri-Julien / de Bellechasse,2.3213399996370754,308,True
+734,88966.0,77,Marché St-Jacques (Atateken),45.52064546194194,-73.56391488165856,2,Atateken / du Square Amherst | Marché St-Jacques (Atateken),9.174819999613419,308,True
+979,87973.0,78,St-Dominique / St-Zotique,45.532265,-73.611063,1,St-Dominique / St-Zotique,0.0,308,True
+179,86200.0,79,St-Charles / Thomas-Keefer,45.477605,-73.573775,1,St-Charles / Thomas-Keefer,0.0,308,True
+914,85995.0,80,Gauthier / Papineau,45.52967775294103,-73.56731135673652,1,Gauthier / Papineau,10.141476847580947,308,True
+821,85779.0,81,Gilford / St-Denis,45.52502469077269,-73.58573507231806,1,Gilford / St-Denis,32.53073727287233,300,True
+767,85175.0,82,Laval / du Mont-Royal,45.522365,-73.584146,1,Laval / du Mont-Royal,0.0,308,True
+699,84666.0,83,Montcalm / de Maisonneuve,45.519133971516204,-73.5578832405159,2,Montcalm / de Maisonneuve | Métro Beaudry (Montcalm / de Maisonneuve),1.8722726485112844,308,True
+595,84144.0,84,St-Denis / Ste-Catherine,45.51375785082718,-73.56033480384845,4,St-Denis / Ste-Catherine | Ste-Catherine / St-Denis | Ste-Catherine / St-Denis N/E | Ste-Catherine / St-Denis (ouest),34.8201000000563,250,True
+882,83943.0,85,Calixa-Lavallée / Rachel,45.52780357415221,-73.57185497827484,4,Calixa-Lavallée / Rachel | Calixa-Lavallée / Rachel (ouest) | Calixa-Lavallée / Rachel 2 | Calixa-Lavallée/Rachel,23.325396749546996,307,True
+770,83744.0,86,St-Hubert / Duluth,45.522426,-73.574184,1,St-Hubert / Duluth,0.0,308,True
+857,82575.0,87,Rachel / de Brébeuf,45.52690231845943,-73.57267578219168,1,Rachel / de Brébeuf,4.7586929814480925,308,True
+949,81765.0,88,Marmier / St-Denis,45.530841714502756,-73.59838824708746,1,Marmier / St-Denis,24.539880000092126,301,True
+681,81761.0,89,de l'Esplanade / du Mont-Royal,45.518253,-73.588338,1,de l'Esplanade / du Mont-Royal,0.0,308,True
+658,81493.0,90,Duluth / St-Laurent,45.516876,-73.57946,1,Duluth / St-Laurent,0.0,195,True
+661,81486.0,91,Gare d'autocars de Montréal (Berri / Ontario),45.51691136123781,-73.56410152624976,1,Gare d'autocars de Montréal (Berri / Ontario),24.027498993293023,308,True
+1075,81199.0,92,Messier / du Mont-Royal,45.537114,-73.571003,1,Messier / du Mont-Royal,0.0,308,True
+638,81138.0,93,Place Émilie-Gamelin (St-Hubert / de Maisonneuve),45.51586926569596,-73.56007878379846,4,St-Hubert / de Maisonneuve (sud) | Parc Émilie-Gamelin (St-Hubert / de Maisonneuve sud) | Place Émilie-Gamelin (St-Hubert / de Maisonneuve) | Place Émilie-Gamelin,10.609545009708768,308,True
+548,80651.0,94,Ste-Catherine / St-Laurent,45.509926524752956,-73.56380711077749,2,Ste-Catherine / St-Laurent | St-Catherine / St-Laurent,21.997460000227562,218,True
+1169,80344.0,95,Métro Jarry (Lajeunesse / Jarry),45.54356,-73.627772,1,Métro Jarry (Lajeunesse / Jarry),0.0,308,True
+1045,77897.0,96,Gary-Carter / St-Laurent,45.53600613534569,-73.62249626569269,1,Gary-Carter / St-Laurent,47.09004000049481,308,True
+753,77893.0,97,St-André / Roy,45.52159884915063,-73.57038503843262,3,Roy / St-André | St-André / Roy | Roy/St-André,36.66533937185279,308,True
+694,76926.0,98,Vallières / St-Laurent,45.51896700000001,-73.583616,1,Vallières / St-Laurent,0.0,308,True
+920,76736.0,99,Marquette / Rachel,45.529813857244065,-73.57030119850828,1,Marquette / Rachel,3.979440000163777,308,True
+997,75418.0,100,de Lanaudière / Laurier,45.533293375302726,-73.58367903748868,1,de Lanaudière / Laurier,12.7158517398384,308,True

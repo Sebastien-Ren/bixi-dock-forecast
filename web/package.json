@@ -1,0 +1,16 @@
+{
+  "name": "bixi-forecast-map",
+  "private": true,
+  "type": "module",
+  "description": "Builds web/vendor: MapLibre GL JS and the deck.gl pieces the map page uses.",
+  "scripts": {
+    "vendor": "node build-vendor.mjs"
+  },
+  "devDependencies": {
+    "@deck.gl/core": "9.4.1",
+    "@deck.gl/layers": "9.4.1",
+    "@deck.gl/maplibre": "9.4.1",
+    "esbuild": "^0.25.0",
+    "maplibre-gl": "6.18.0"
+  }
+}

@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How the forecast works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #ffffff; --panel: #ffffff; --ink: #1d1f22; --ink-2: #4a4e55; --ink-3: #80858c;
+    --rule: #e6e5e1; --neutral: #b9b8b3; --wash: #f4f3ef;
+    --mono: "Instrument Sans", "Helvetica Neue", Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: 64px; }
+  body { margin: 0; background: var(--paper); color: var(--ink);
+         font: 17px/1.75 "Instrument Sans", "Helvetica Neue", Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: var(--ink); text-underline-offset: 3px; }
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+  .bar { position: sticky; top: 0; z-index: 5; background: rgba(255, 255, 255, .92); backdrop-filter: blur(6px); }
+  .bar-in { max-width: 1100px; margin: 0 auto; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center;
+            font: 13px var(--mono); letter-spacing: .04em; text-transform: uppercase; }
+  .bar a { text-decoration: none; color: var(--ink-2); }
+  .bar a:hover { color: var(--ink); }
+  .hz { display: flex; gap: 10px; align-items: center; color: var(--ink-3); }
+  .hz button { font: 600 12.5px "Instrument Sans", sans-serif; letter-spacing: .02em; text-transform: none; background: none; border: 0;
+               padding: 5px 13px; cursor: pointer; color: var(--ink); }
+  .hz button + button { border-left: 1px solid var(--ink); }
+  .hz button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+  .hz button:hover:not([aria-pressed="true"]) { background: var(--wash); }
+
+  main { max-width: 760px; margin: 0 auto; padding: 56px 24px 120px; }
+  .title { text-align: center; font-size: clamp(28px, 4vw, 36px); font-weight: 500; letter-spacing: -0.01em; line-height: 1.2; margin: 24px 0 14px; }
+  .byline { text-align: center; font: 14px var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); margin: 0 0 72px; }
+
+  .label { text-align: center; font: 14.5px var(--mono); letter-spacing: .08em; text-transform: uppercase; margin: 104px 0 36px; color: var(--ink); }
+  .abstract p { text-align: center; }
+  p { margin: 0 0 18px; }
+  h3 { font-size: 17px; font-weight: 600; margin: 40px 0 8px; }
+  ul.plain { margin: 0 0 18px; padding-left: 20px; }
+  ul.plain li { margin-bottom: 8px; }
+  .muted, .onmap { color: var(--ink-3); }
+  .onmap { font-size: 15px; }
+  .onmap b { color: var(--ink-2); font-weight: 500; }
+
+  .eq { margin: 30px 0 30px; text-align: center; overflow-x: auto; }
+  .eq math { font-size: 1.2em; }
+  .eq .say { font-size: 14.5px; color: var(--ink-3); margin: 12px auto 0; max-width: 60ch; line-height: 1.6; }
+
+  figure { margin: 36px 0 36px; position: relative; }
+  figure svg { width: 100%; height: auto; display: block; overflow: visible; }
+  figure svg text { font: 12px "Instrument Sans", sans-serif; fill: var(--ink-3); }
+  figure svg text.lab { fill: var(--ink); font-weight: 600; }
+  figure svg text.lab2 { fill: var(--ink-2); }
+  .ftitle { font: 12.5px var(--mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 14px; }
+  figcaption { font-size: 14.5px; color: var(--ink-3); margin-top: 12px; line-height: 1.6; }
+  figcaption b { color: var(--ink-2); font-weight: 600; }
+  .ctip { position: absolute; pointer-events: none; display: none; background: var(--ink); color: #fff; border-radius: 4px; padding: 6px 9px;
+          font-size: 12.5px; line-height: 1.35; white-space: nowrap; transform: translate(-50%, -118%); z-index: 3; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14.5px; margin: 24px 0 28px; }
+  th { text-align: left; font: 12px var(--mono); letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); padding: 0 10px 8px 0; vertical-align: bottom; font-weight: 400; }
+  td { padding: 8px 10px 8px 0; border-top: 1px solid var(--rule); vertical-align: top; }
+  td.num, th.num { text-align: right; }
+  td b { font-weight: 600; }
+
+  .example { border-left: 2px solid var(--ink); padding: 2px 0 2px 16px; color: var(--ink-2); font-size: 16px; }
+  .example b { color: var(--ink); font-weight: 600; }
+  footer { margin-top: 104px; font-size: 13.5px; color: var(--ink-3); text-align: center; line-height: 1.6; }
+
+  @media (max-width: 640px) {
+    body { font-size: 16px; }
+    .bar-in { padding: 12px 16px; }
+    .hz .lbl { display: none; }
+    main { padding: 32px 16px 96px; }
+    .label { margin-top: 80px; }
+  }
+</style>
+</head>
+<body>
+<div class="bar"><div class="bar-in">
+  <a href="index.html">Back to the map</a>
+  <span class="lbl" style="color:var(--ink-3)">Technical note</span>
+</div></div>
+
+<main>
+<h1 class="title">Forecasting Net Bike Flow at Montreal's Busiest BIXI Stations</h1>
+<p class="byline">Charts and examples use the 3-hour look-ahead; tables show 1, 3 and 6 hours</p>
+
+<div class="label">00/ Abstract</div>
+<div class="abstract">
+  <p>A bike-share station never shuts down, but it can turn riders away: empty, with no bike to take, or full, with no dock to return one to. We forecast net flow, arrivals minus departures, at Montreal's 100 busiest BIXI stations over the next 1, 3 and 6 hours, with an 80% range. A gradient-boosting model with quantile outputs is trained on summers 2022 and 2023 and tested on every hour of 2024 to 2026, using weather forecasts as they were issued. It is scored on the windows that matter, against hard baselines, as a shortlist for a dispatcher, and, on real station counts from 2025, as a probability that a station will run empty. <span id="short-found"></span> To decide where trucks should go, how close a station is to empty or full right now matters far more than the size of its forecast; the forecast adds a little on top.</p>
+</div>
+
+<div class="label" id="question">01/ The problem</div>
+<p>A station stays open all day; what goes wrong is that it stops being useful. When it is <b>empty</b>, a rider who wants a bike has to walk to another station; when it is <b>full</b>, a rider arriving by bike cannot return it there. Both are caused by imbalance: more bikes leaving than arriving, or the reverse. The quantity forecast is therefore <b>net flow</b> at station <i>s</i> over the <i>h</i> hours that start at hour <i>t</i>:</p>
+<div class="eq">
+  <math display="block"><msubsup><mi>y</mi><mrow><mi>s</mi><mo>,</mo><mi>t</mi></mrow><mrow><mo stretchy="false">(</mo><mi>h</mi><mo stretchy="false">)</mo></mrow></msubsup><mo>=</mo><munderover><mo>&#x2211;</mo><mrow><mi>k</mi><mo>=</mo><mn>0</mn></mrow><mrow><mi>h</mi><mo>&#x2212;</mo><mn>1</mn></mrow></munderover><mo stretchy="false">(</mo><msub><mi>a</mi><mrow><mi>s</mi><mo>,</mo><mi>t</mi><mo>+</mo><mi>k</mi></mrow></msub><mo>&#x2212;</mo><msub><mi>d</mi><mrow><mi>s</mi><mo>,</mo><mi>t</mi><mo>+</mo><mi>k</mi></mrow></msub><mo stretchy="false">)</mo><mo>,</mo><mspace width="1em"/><mi>h</mi><mo>&#x2208;</mo><mo stretchy="false">{</mo><mn>1</mn><mo>,</mo><mn>3</mn><mo>,</mo><mn>6</mn><mo stretchy="false">}</mo></math>
+  <div class="say">Arrivals <i>a</i> minus departures <i>d</i>, added over the window. Positive fills the station, negative drains it.</div>
+</div>
+<p class="example" id="ex-net"></p>
+<p class="onmap"><b>On the map:</b> every circle is this number for the selected hour; blue gains, red loses, size is how much.</p>
+
+<div class="label" id="pipeline">02/ System overview</div>
+<p>One chain of steps turns raw trips into everything the map shows. Each step writes a file the next one reads; the map and this note read only the last one. The three evaluations at the bottom all score the same forecasts.</p>
+<figure>
+  <svg id="fig-pipe" viewBox="0 0 700 250" role="img" aria-label="Pipeline from raw trips to the map"></svg>
+</figure>
+
+<div class="label" id="data">03/ Data</div>
+<ul class="plain">
+  <li><b>Trips.</b> BIXI's public trip history, January 2022 to August 2026, 57.8 million trips. Counting them per station and hour gives arrivals and departures.</li>
+  <li><b>Stations.</b> Trip files carry names and coordinates, not stable ids, and stations get renamed and moved. Two records are one station if they are within 25 m, or have the same name within 150 m. The 100 busiest are ranked on summer trips in 2022 and 2023.</li>
+  <li><b>Weather.</b> ECMWF forecast runs as issued, via Open-Meteo, for one downtown point. A run is used only 8 hours after it started, roughly when it would have been available.</li>
+  <li><b>Station counts.</b> For section 11 only: snapshots of BIXI's live station feed (bikes, free docks, capacity), saved about every 15 minutes by a public archive, May to September 2025.</li>
+</ul>
+<p class="muted">Summer is May to September. Every input for hour <i>t</i> uses only data from before <i>t</i>.</p>
+
+<div class="label" id="scoring">04/ What counts as right</div>
+<p>Net flow is skewed. <span id="dist-text"></span> An average over every window is dominated by the many ordinary ones, and over all windows a forecast of zero misses by <span id="dist-zero"></span>. The big windows are where stations empty or fill. So the main score is the average miss on the <b>biggest-change windows</b>: the 10% of station-windows with the largest |net flow|, set per look-ahead.</p>
+<div class="eq">
+  <math display="block"><mtext>miss</mtext><mo>=</mo><mfrac><mn>1</mn><mrow><mo>|</mo><mi>B</mi><mo>|</mo></mrow></mfrac><munder><mo>&#x2211;</mo><mrow><mo stretchy="false">(</mo><mi>s</mi><mo>,</mo><mi>t</mi><mo stretchy="false">)</mo><mo>&#x2208;</mo><mi>B</mi></mrow></munder><mo>|</mo><msub><mi>y</mi><mrow><mi>s</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>&#x2212;</mo><msub><mover><mi>y</mi><mo>^</mo></mover><mrow><mi>s</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>|</mo><mo>,</mo><mspace width="1em"/><mi>B</mi><mo>=</mo><mo stretchy="false">{</mo><mo stretchy="false">(</mo><mi>s</mi><mo>,</mo><mi>t</mi><mo stretchy="false">)</mo><mo>:</mo><mo>|</mo><msub><mi>y</mi><mrow><mi>s</mi><mo>,</mo><mi>t</mi></mrow></msub><mo>|</mo><mo>&#x2265;</mo><mi>c</mi><mo stretchy="false">}</mo></math>
+  <div class="say">Average absolute miss, in bikes, over the big windows <i>B</i>. The cut-off <i>c</i> is 9, 18 and 29 bikes at 1, 3 and 6 hours (<b id="cutoff-text"></b> in the 3-hour examples).</div>
+</div>
+
+<div class="label" id="baselines">05/ Baselines</div>
+<p>A forecast is worth something only if it beats simple rules. Five are scored exactly like the model:</p>
+<ul class="plain">
+  <li><b>Predict zero</b>: no change. The floor.</li>
+  <li><b>Just before</b> (persistence): the net flow of the window that just ended. Weak here, because flow reverses: out in the morning, back in the evening.</li>
+  <li><b>Last week</b>: the same window one week ago (seasonal naive).</li>
+  <li><b>Last 4 weeks</b>: the same window averaged over four weeks. The hard one.</li>
+  <li><b>Level 1</b> ("Simple average" on the map): the average by station, hour of week and temperature band, from 2022 and 2023.</li>
+</ul>
+
+<div class="label" id="model">06/ Model</div>
+<p><b>Level 2</b> ("This model" on the map) is gradient-boosted decision trees: an ensemble built one shallow tree at a time, each fitted to the errors left by the trees before it. One global model per look-ahead is shared by all 100 stations, so quiet stations borrow strength from busy ones. Its inputs:</p>
+<ul class="plain">
+  <li><b>Recent state</b>: net flow, arrivals and departures over the last 1, 3 and 6 hours; trips over the last day and week.</li>
+  <li><b>Seasonal memory</b>: the same window yesterday, last week, and averaged over 4 weeks.</li>
+  <li><b>Calendar and place</b>: hour, day of week, weekend, holiday, latitude, longitude.</li>
+  <li><b>Expected weather</b> over the window: temperature, rain, wind, from the forecast that existed then.</li>
+</ul>
+<p>Four models share these inputs: one minimises squared error (the forecast) and three minimise the pinball loss at the 10th, 50th and 90th percentiles (the range):</p>
+<div class="eq">
+  <math display="block"><msub><mi>L</mi><mi>q</mi></msub><mo stretchy="false">(</mo><mi>y</mi><mo>,</mo><mover><mi>y</mi><mo>^</mo></mover><mo stretchy="false">)</mo><mo>=</mo><mo>{</mo><mtable><mtr><mtd><mi>q</mi><mspace width="0.2em"/><mo stretchy="false">(</mo><mi>y</mi><mo>&#x2212;</mo><mover><mi>y</mi><mo>^</mo></mover><mo stretchy="false">)</mo></mtd><mtd><mtext>if</mtext><mspace width="0.4em"/><mi>y</mi><mo>&#x2265;</mo><mover><mi>y</mi><mo>^</mo></mover></mtd></mtr><mtr><mtd><mo stretchy="false">(</mo><mn>1</mn><mo>&#x2212;</mo><mi>q</mi><mo stretchy="false">)</mo><mspace width="0.2em"/><mo stretchy="false">(</mo><mover><mi>y</mi><mo>^</mo></mover><mo>&#x2212;</mo><mi>y</mi><mo stretchy="false">)</mo></mtd><mtd><mtext>otherwise</mtext></mtd></mtr></mtable></math>
+  <div class="say">At <i>q</i> = 0.9 a miss below costs nine times a miss above, so the model settles where 90% of outcomes fall under it.</div>
+</div>
+<h3>Why gradient boosting, and not a Gaussian process or a neural network</h3>
+<p>The data is tabular: about 880,000 station-hours per look-ahead in the test years alone, with mixed calendar, weather and lag inputs. Gradient-boosted trees are the standard strong learner for this shape of problem; tree ensembles (LightGBM) dominated the top of the M5 retail forecasting competition. An exact Gaussian process scales with the cube of the number of training points, which rules it out at this size without heavy approximation. Deep sequence models are not guaranteed to win either: a benchmark across transport datasets found a weekly historical average competitive with many deep-learning methods. The comparison that decides the model is the one in section 09, against hard baselines, not the model's complexity.</p>
+<p>Tree size was chosen once, by learning on 2022 and checking on 2023, then refitted on both years. Nothing from 2024 onward touched any choice.</p>
+<figure>
+  <div class="ftitle">What the 3-hour model leans on</div>
+  <svg id="fig-imp" viewBox="0 0 700 250" role="img" aria-label="Increase in miss when each input is shuffled"></svg>
+  <figcaption>Permutation importance: how much the average miss (bikes, all windows) grows when one input is scrambled. <b>The 4-week average of the same window dominates.</b> Most of what the model knows is what usually happens at that station at that time; the rest is correction.</figcaption>
+</figure>
+
+<h3>What the model needs, and two alternatives</h3>
+<p>Each row refits the forecast with one change and scores it like section 09, against the model above, with day-block intervals. Removing a group shows how much the model relies on it; the last two rows try obvious improvements: adding what neighbouring stations (within 600 m) just did, and forecasting arrivals and departures separately before subtracting.</p>
+<table id="ms-table"></table>
+<p id="ms-text"></p>
+
+<div class="label" id="uncertainty">07/ Uncertainty</div>
+<p>The range runs from the 10th to the 90th percentile model and should hold 80% of outcomes. Fitted on 2022 and 2023, it held slightly less later on. A <b>self-correcting band</b> recalibrates it each day from its own recent record, using only outcomes already known:</p>
+<div class="eq">
+  <math display="block"><msub><mi>m</mi><mi>i</mi></msub><mo>=</mo><mfrac><mrow><mo>max</mo><mo stretchy="false">(</mo><msub><mi>l</mi><mi>i</mi></msub><mo>&#x2212;</mo><msub><mi>y</mi><mi>i</mi></msub><mo>,</mo><mspace width="0.3em"/><msub><mi>y</mi><mi>i</mi></msub><mo>&#x2212;</mo><msub><mi>u</mi><mi>i</mi></msub><mo stretchy="false">)</mo></mrow><mrow><mo stretchy="false">(</mo><msub><mi>u</mi><mi>i</mi></msub><mo>&#x2212;</mo><msub><mi>l</mi><mi>i</mi></msub><mo stretchy="false">)</mo><mo>/</mo><mn>2</mn></mrow></mfrac><mo>,</mo><mspace width="1.2em"/><msub><mi>&#x3BB;</mi><mtext>today</mtext></msub><mo>=</mo><msub><mi>Q</mi><mn>0.8</mn></msub><mo stretchy="false">(</mo><mo stretchy="false">{</mo><msub><mi>m</mi><mi>i</mi></msub><mo>:</mo><mtext>last 28 days</mtext><mo stretchy="false">}</mo><mo stretchy="false">)</mo></math>
+  <div class="say">Each past miss <i>m</i> is how far the outcome fell outside its band, in half-band-widths (negative if inside). Both edges move out, or in, by λ half-widths: the stretch that would have made 80% of the last 28 days' bands hold.</div>
+</div>
+<p class="onmap"><b>On the map:</b> a circle fades when its range crosses zero, meaning the model cannot tell whether the station gains or loses.</p>
+
+<div class="label" id="testing">08/ Evaluation protocol</div>
+<figure>
+  <svg id="fig-time" viewBox="0 0 700 140" role="img" aria-label="Which years train, choose settings and test"></svg>
+</figure>
+<ul class="plain">
+  <li><b>Forward only.</b> Train on the past, score on the future. Hours are never shuffled.</li>
+  <li><b>Weather as forecast.</b> Using observed weather would be cheating; scored both ways, honesty costs at most 0.04 bikes.</li>
+  <li><b>Leakage tests.</b> Automated tests rewrite every hour after <i>t</i> and check that no input for hour <i>t</i> moves.</li>
+  <li><b>Never retrained.</b> The map's model was fitted once; refitting each year is scored separately below.</li>
+  <li><b>Pre-registration.</b> For sections 10 and 11, questions, baselines and the rule for "better" were written down before any result was seen.</li>
+</ul>
+
+<div class="label" id="results">09/ Results</div>
+<figure>
+  <div class="ftitle" id="base-title"></div>
+  <svg id="fig-base" viewBox="0 0 700 230" role="img" aria-label="Average miss on big windows by method"></svg>
+  <figcaption id="base-cap"></figcaption>
+</figure>
+<p>The range, before and after self-correction:</p>
+<table id="cov-table"></table>
+<p>Refitting every year on all earlier years recovers part of what the fixed model loses as the network changes:</p>
+<table id="retrain-table"></table>
+
+<div class="label" id="decision">10/ From forecast to decision</div>
+<p>A dispatcher needs to know which few stations to check. So the forecast is also scored as a shortlist: at each decision time, take the <i>K</i> = 10 largest forecasts and count how many really had a big window.</p>
+<div class="eq">
+  <math display="block"><mtext>precision@</mtext><mi>K</mi><mo>=</mo><mfrac><mtext>picks that were really big</mtext><mrow><mi>K</mi><mo>&#xD7;</mo><mtext>decision times</mtext></mrow></mfrac></math>
+  <div class="say">Decision times are every hour at the 1-hour look-ahead and every 3 or 6 hours at the others, so no window counts twice. Rankings see only forecasts.</div>
+</div>
+<p><b>Intervals by resampling days.</b> Neighbouring hours share weather and events, so rows are not independent. Whole days are redrawn with replacement 2,000 times and the metric recomputed; the middle 95% is the interval. A method is called better only if the interval of the paired difference, on the same redrawn days, excludes zero.</p>
+<figure>
+  <div class="ftitle" id="dec-title"></div>
+  <svg id="fig-dec" viewBox="0 0 700 220" role="img" aria-label="Share of top-10 picks that were really big, by ranking"></svg>
+  <figcaption id="dec-cap"></figcaption>
+</figure>
+<p>One caution, measured in section 12: a shortlist of the biggest moves is not a list of stations about to run empty. A station with many docks can lose 30 bikes and be fine.</p>
+<p class="onmap"><b>On the map:</b> <a href="index.html#where">"Where to look"</a> is this shortlist for the selected hour, with what really happened next to each pick.</p>
+
+<section id="empty">
+<div class="label">11/ From net flow to empty stations</div>
+<p>Net flow is not stock: losing 20 bikes is harmless at a station that started with 30. Real station counts for summer 2025, a year inside the test period, allow the real question to be scored. This is a retrospective test on past data.</p>
+<p>Start from the bikes there now, <i>b</i>, and treat the change as normal around the forecast μ with spread σ read off the 80% range; then recalibrate with a one-variable logistic regression fitted on May to July 2025:</p>
+<div class="eq">
+  <math display="block"><mi>P</mi><mo stretchy="false">(</mo><mtext>empty</mtext><mo stretchy="false">)</mo><mo>&#x2248;</mo><mi>&#x3A6;</mi><mrow><mo>(</mo><mfrac><mrow><mn>0.5</mn><mo>&#x2212;</mo><mi>b</mi><mo>&#x2212;</mo><mi>&#x3BC;</mi></mrow><mi>&#x3C3;</mi></mfrac><mo>)</mo></mrow><mo>,</mo><mspace width="1.2em"/><mi>&#x3C3;</mi><mo>=</mo><mfrac><mrow><msub><mi>q</mi><mn>0.9</mn></msub><mo>&#x2212;</mo><msub><mi>q</mi><mn>0.1</mn></msub></mrow><mrow><mn>2</mn><mo>&#xD7;</mo><mn>1.2816</mn></mrow></mfrac></math>
+  <div class="say">Φ is the standard normal cumulative distribution; 0.5 treats bikes as whole. Full is the mirror image, with free docks in place of bikes.</div>
+</div>
+<p class="example" id="ex-prob"></p>
+<div class="eq">
+  <math display="block"><mtext>Brier</mtext><mo>=</mo><mfrac><mn>1</mn><mi>N</mi></mfrac><munderover><mo>&#x2211;</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mi>N</mi></munderover><msup><mrow><mo stretchy="false">(</mo><msub><mi>p</mi><mi>i</mi></msub><mo>&#x2212;</mo><msub><mi>o</mi><mi>i</mi></msub><mo stretchy="false">)</mo></mrow><mn>2</mn></msup><mo>,</mo><mspace width="1.2em"/><mtext>skill</mtext><mo>=</mo><mn>1</mn><mo>&#x2212;</mo><mfrac><msub><mtext>Brier</mtext><mtext>forecast</mtext></msub><msub><mtext>Brier</mtext><mtext>baseline</mtext></msub></mfrac></math>
+  <div class="say">Stated chance <i>p</i>, outcome <i>o</i> (1 if the station was empty). Skill is the share of the baseline's error removed.</div>
+</div>
+<p>The baseline knows the real count but has no forecast: how often a station with that many bikes ended up empty after that many hours, at that hour of day, learned on May to July. Tested on August and September 2025, stations not already empty or full:</p>
+<table id="emp-table"></table>
+<figure>
+  <div class="ftitle" id="cal-title"></div>
+  <svg id="fig-cal" viewBox="0 0 700 330" role="img" aria-label="Stated chance against how often the station was empty"></svg>
+  <figcaption id="cal-cap"></figcaption>
+</figure>
+<h3>The truck effect</h3>
+<p>The model learned from trips, and trips do not include BIXI's trucks moving bikes. Comparing the real change in bikes at each station with the trip count for the same window measures what trips miss, and explains why the raw probability above is too sure.</p>
+<p class="example" id="ex-limit"></p>
+<figure>
+  <div class="ftitle" id="truck-title"></div>
+  <svg id="fig-truck" viewBox="0 0 700 220" role="img" aria-label="Gap between real stock change and trip net flow by time of day"></svg>
+  <figcaption id="truck-cap"></figcaption>
+</figure>
+<p class="onmap"><b>On the map:</b> <a href="index.html#empty">"Will it empty?"</a> sums this up in three steps, with the raw and corrected chances side by side. For a dispatcher, a big predicted loss says where to look; whether that station really empties also depends on trucks the trips cannot see.</p>
+</section>
+
+<section id="trucks"><div class="label">12/ Which stations to send a truck to</div>
+<p>BIXI's dispatchers give each station an acceptable range of bikes, set by hand from experience, and a station outside it raises an alert. There are more alerts than trucks, so stations are ranked mostly by location: first those empty or full whose neighbours within 600 m are too, then those within 600 m of a metro station, then those near either (Silva, Aloise and Jena, 2024, describing the 2019 and 2020 seasons).</p>
+<p>Three simple rankings are compared on the real 2025 counts. At each decision time each picks 10 stations, and a pick counts if the station really is empty or full at the end of the window:</p>
+<ul class="plain">
+  <li><b>Forecast size</b>: the largest predicted change, as in section 10.</li>
+  <li><b>Stock only</b>: the stations closest to empty or full right now. No forecast.</li>
+  <li><b>Stock + forecast</b>: the chance of ending empty or full, from section 11.</li>
+</ul>
+<figure>
+  <div class="ftitle" id="trk-title"></div>
+  <svg id="fig-trk" viewBox="0 0 700 200" role="img" aria-label="Share of picks that really ended empty or full, by ranking"></svg>
+  <figcaption id="trk-cap"></figcaption>
+</figure>
+<p>BIXI's own rule is not scored. These counts already include what its trucks did while following that rule, so the stations it sent trucks to look fixed; scoring it here would be unfair. Comparing against it properly needs BIXI's truck logs, which is the natural next step for this project.</p>
+</section>
+
+<div class="label" id="limits">13/ Limits</div>
+<ul class="plain">
+  <li><b>Trucks are invisible in trips</b>, so trip net flow is not the real change in stock (section 11).</li>
+  <li><b>Small edges.</b> 1% to 8% over a 4-week average on big windows, about 2 points on the shortlist, 1% to 2.4% on empty stations.</li>
+  <li><b>No event calendar.</b> The worst misses are festivals and matches.</li>
+  <li><b>It ages</b> when never retrained (section 09).</li>
+  <li><b>A changing network.</b> 85 of the 100 stations were in service in 2026.</li>
+  <li><b>One summer of real counts</b>: 61 test days, 91 stations, July 2025 half missing from the archive.</li>
+  <li><b>The test is a promise.</b> Results were read once and nothing was tuned afterwards, but there is no locked final set of dates.</li>
+</ul>
+
+<footer>
+  Data: BIXI Montréal open data (trips, station feed), Open-Meteo / ECMWF IFS (CC BY 4.0), station-feed archive by Max Halford (bike-sharing-history).<br>
+  References: Martins Silva, Aloise and Jena, "Data-driven prioritization strategies for inventory rebalancing in bike-sharing systems", Omega 129, 2024. Makridakis, Spiliotis and Assimakopoulos, "M5 accuracy competition: results, findings, and conclusions", International Journal of Forecasting, 2022. arXiv:2203.02954, a benchmark of a weekly historical-average baseline against deep-learning models on transport datasets.<br>
+  Every table: reports/RESULTS.md in the repository.
+</footer>
+</main>
+
+<script type="module">
+const $ = (id) => document.getElementById(id);
+const DATA = await (await fetch("data/forecast.json", { cache: "no-cache" })).json();
+const F = DATA.findings, A = F.availability;
+const state = { h: 3 };
+const pct = (x, d = 0) => `${(x * 100).toFixed(d)}%`;
+const sgn = (x, d = 1) => `${x >= 0 ? "+" : "−"}${Math.abs(x * 100).toFixed(d)}`;
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+/* ---------- shared tooltip: any SVG element with data-tip ---------- */
+function hookTips(svg) {
+  const fig = svg.closest("figure");
+  let tip = fig.querySelector(".ctip");
+  if (!tip) { tip = document.createElement("div"); tip.className = "ctip"; fig.appendChild(tip); }
+  svg.onpointermove = (e) => {
+    const t = e.target.closest("[data-tip]");
+    if (!t) { tip.style.display = "none"; return; }
+    const fr = fig.getBoundingClientRect();
+    tip.innerHTML = t.dataset.tip;
+    tip.style.left = `${e.clientX - fr.left}px`; tip.style.top = `${e.clientY - fr.top}px`; tip.style.display = "block";
+  };
+  svg.onpointerleave = () => (tip.style.display = "none");
+}
+
+/* ---------- horizontal bars: rows [{name, v, lo?, hi?, ours?}] ---------- */
+function hbars(svg, rows, { unit = "", fmt = (v) => v.toFixed(1), max = null, W = 700, labelW = 150 } = {}) {
+  const rowH = 34, T = 6, H = T + rows.length * rowH + 22, R = 64;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const raw = max ?? Math.max(...rows.map((r) => r.hi ?? r.v)) * 1.05;
+  const mag = 10 ** Math.floor(Math.log10(raw / 4)), step = [1, 2, 2.5, 5, 10].map((k) => k * mag).find((k) => raw / k <= 5);
+  const m = Math.ceil(raw / step) * step, nTicks = Math.round(m / step);
+  const x = (v) => labelW + (v / m) * (W - labelW - R);
+  let g = "";
+  for (let k = 0; k <= nTicks; k++) {
+    const v = step * k;
+    g += `<line x1="${x(v)}" x2="${x(v)}" y1="${T}" y2="${H - 22}" stroke="var(--rule)"/>`;
+    g += `<text x="${x(v)}" y="${H - 6}" text-anchor="middle">${fmt(v)}${unit}</text>`;
+  }
+  rows.forEach((r, i) => {
+    const yc = T + i * rowH + rowH / 2, col = r.ours ? "var(--ink)" : "var(--neutral)";
+    const tip = esc(r.tip ?? `${r.name}: ${fmt(r.v)}${unit}`);
+    g += `<g data-tip="${tip}"><rect x="0" y="${yc - rowH / 2}" width="${W}" height="${rowH}" fill="transparent"/>`;
+    g += `<text x="${labelW - 12}" y="${yc + 4}" text-anchor="end" class="${r.ours ? "lab" : "lab2"}">${esc(r.name)}</text>`;
+    g += `<rect x="${labelW}" y="${yc - 6}" width="${Math.max(0, x(r.v) - labelW)}" height="12" rx="3" fill="${col}"/>`;
+    if (r.lo != null) g += `<line x1="${x(r.lo)}" x2="${x(r.hi)}" y1="${yc}" y2="${yc}" stroke="var(--ink)" stroke-width="1.5"/>` +
+      `<line x1="${x(r.lo)}" x2="${x(r.lo)}" y1="${yc - 5}" y2="${yc + 5}" stroke="var(--ink)" stroke-width="1.5"/>` +
+      `<line x1="${x(r.hi)}" x2="${x(r.hi)}" y1="${yc - 5}" y2="${yc + 5}" stroke="var(--ink)" stroke-width="1.5"/>`;
+    g += `<text x="${x(r.hi ?? r.v) + 8}" y="${yc + 4}" class="${r.ours ? "lab" : "lab2"}">${fmt(r.v)}${unit}</text></g>`;
+  });
+  svg.innerHTML = g;
+  hookTips(svg);
+}
+
+/* ---------- static figures ---------- */
+function drawPipeline() {
+  const box = (x, y, w, t, s, strong) =>
+    `<rect x="${x}" y="${y}" width="${w}" height="52" rx="9" fill="${strong ? "var(--ink)" : "var(--paper)"}" stroke="${strong ? "var(--ink)" : "var(--rule)"}"/>` +
+    `<text x="${x + w / 2}" y="${y + 22}" text-anchor="middle" style="fill:${strong ? "var(--panel)" : "var(--ink)"};font-weight:600;font-size:13px">${t}</text>` +
+    `<text x="${x + w / 2}" y="${y + 39}" text-anchor="middle" style="fill:${strong ? "#cfd2d6" : "var(--ink-3)"};font-size:11.5px">${s}</text>`;
+  const arrow = (x1, y1, x2, y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--ink-3)" stroke-width="1.5" marker-end="url(#ah)"/>`;
+  let g = `<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--ink-3)"/></marker></defs>`;
+  g += box(0, 10, 120, "Trips", "2022 to 2026") + arrow(120, 36, 140, 36);
+  g += box(142, 10, 120, "Stations", "25 m / 150 m rule") + arrow(262, 36, 282, 36);
+  g += box(284, 10, 130, "Features", "per station-hour") + arrow(414, 36, 434, 36);
+  g += box(436, 10, 120, "Models", "Level 1, Level 2") + arrow(556, 36, 576, 36);
+  g += box(578, 10, 122, "Forecasts", "2024 to 2026", true);
+  g += `<text x="0" y="104" style="font-size:12px">weather as issued, joined at Features</text>`;
+  g += `<line x1="639" y1="62" x2="639" y2="120" stroke="var(--ink-3)" stroke-width="1.5"/><line x1="90" y1="120" x2="639" y2="120" stroke="var(--ink-3)" stroke-width="1.5"/>`;
+  g += arrow(90, 120, 90, 146) + arrow(320, 120, 320, 146) + arrow(560, 120, 560, 146);
+  g += box(10, 148, 160, "Score", "miss on big windows") + box(240, 148, 160, "Shortlist", "top 10, precision") + box(470, 148, 180, "Empty or full", "real counts, 2025");
+  g += `<line x1="90" y1="200" x2="90" y2="226" stroke="var(--ink-3)" stroke-width="1.5"/><line x1="320" y1="200" x2="320" y2="226" stroke="var(--ink-3)" stroke-width="1.5"/><line x1="560" y1="200" x2="560" y2="226" stroke="var(--ink-3)" stroke-width="1.5"/>`;
+  g += `<line x1="90" y1="226" x2="560" y2="226" stroke="var(--ink-3)" stroke-width="1.5"/>`;
+  g += `<text x="325" y="246" text-anchor="middle" class="lab">forecast.json: the one file the map and this page read</text>`;
+  $("fig-pipe").innerHTML = g;
+}
+
+function drawTimeline() {
+  const yrs = [2022, 2023, 2024, 2025, 2026], W = 700, x0 = 20, w = (W - 40) / 5;
+  let g = "";
+  yrs.forEach((y, i) => {
+    const train = y <= 2023, x = x0 + i * w;
+    g += `<rect x="${x + 3}" y="30" width="${w - 6}" height="40" rx="7" fill="${train ? "var(--ink)" : "var(--paper)"}" stroke="${train ? "var(--ink)" : "var(--ink-3)"}"/>`;
+    g += `<text x="${x + w / 2}" y="55" text-anchor="middle" style="font-weight:600;font-size:13px;fill:${train ? "var(--panel)" : "var(--ink)"}">${y}</text>`;
+  });
+  g += `<text x="${x0 + w}" y="20" text-anchor="middle" class="lab2">learn (2023 also picks settings once)</text>`;
+  g += `<text x="${x0 + 3.5 * w}" y="20" text-anchor="middle" class="lab2">test, every summer hour</text>`;
+  const x25 = x0 + 3 * w;
+  g += `<rect x="${x25 + 3}" y="80" width="${w - 6}" height="26" rx="6" fill="var(--wash)" stroke="var(--rule)"/>`;
+  g += `<text x="${x25 + w / 2}" y="97" text-anchor="middle" style="font-size:11.5px;fill:var(--ink-2)">real station counts</text>`;
+  g += `<text x="${x25 + w / 2}" y="126" text-anchor="middle" style="font-size:11.5px">empty-or-full test</text>`;
+  $("fig-time").innerHTML = g;
+}
+
+/* ---------- figures that follow the look-ahead ---------- */
+function drawShort() {
+  const d = F.decision.by_h[String(state.h)], e = A && A.by_h[String(state.h)].empty, s = DATA.scorecard[state.h];
+  const k = s.big_skill_l2_vs_best_simple;
+  $("short-found").textContent =
+    `At ${state.h} h, ${k >= 0 ? pct(k, 1) + " less" : pct(-k, 1) + " more"} miss on big windows than the best simple rule; ` +
+    `${pct(d.precision.l2[0])} of its top-10 picks were really big, against ${pct(d.precision.avg4w[0])} for the 4-week average` +
+    (e ? `; its chance of a station emptying ${e.skill[0] >= 0 ? "beats" : "trails"} knowing today's bike count by ${Math.abs(e.skill[0] * 100).toFixed(1)}%.` : ".") +
+    " Small, honest edges, partly because trips cannot see the trucks that move bikes.";
+}
+
+function drawBase() {
+  const s = DATA.scorecard[state.h], D = F.distribution && F.distribution[String(state.h)];
+  if (D) {
+    $("dist-text").textContent = `Measured on 2024 to 2026 at ${state.h} h: the typical (median) station-window moves ${D.median_abs} bikes, ${pct(D.share_le2)} move 2 bikes or fewer, ` +
+      `and the busiest 10% of windows carry ${pct(D.top10_share_of_movement)} of all bike movement.`;
+    $("dist-zero").textContent = `${D.mae_zero_all.toFixed(1)} bikes on average, against ${D.mae_l2_all.toFixed(1)} for the model`;
+  }
+  $("cutoff-text").textContent = `${Math.round(s.cutoff)} bikes`;
+  $("base-title").textContent = `Average miss on big windows (${Math.round(s.cutoff)}+ bikes), ${state.h} h, 2024 to 2026`;
+  const rows = [["Predict zero", s.big_mae_zero], ["Just before", s.big_mae_persist], ["Last week", s.big_mae_last_week],
+                ["Last 4 weeks", s.big_mae_avg4w], ["Simple average (Level 1)", s.big_mae_l1], ["This model (Level 2)", s.big_mae_l2, true]]
+    .map(([name, v, ours]) => ({ name, v, ours, tip: `${name}: misses by ${v.toFixed(2)} bikes on average` }));
+  hbars($("fig-base"), rows, { unit: "", fmt: (v) => v.toFixed(1), labelW: 190 });
+  const k = s.big_skill_l2_vs_best_simple;
+  $("base-cap").innerHTML = `Bikes, lower is better, ${s.n_big.toLocaleString()} big windows. Level 2 removes <b>${pct(s.big_skill_l2_vs_zero)}</b> of predict-zero's miss, ` +
+    `and is <b>${pct(Math.abs(k))} ${k >= 0 ? "better" : "worse"}</b> than the best simple rule (the 4-week average). The simple rules already know most of the pattern.`;
+}
+
+function drawImp() {
+  const names = { net_avg4w_h3: "Same window, 4-week average", net_yesterday_h3: "Same window, yesterday", hour: "Hour of day",
+    lon: "Longitude", lat: "Latitude", net_last6: "Net flow, last 6 h", trips_avg4w_h3: "Trips, 4-week average", precip_h3: "Rain forecast",
+    dow: "Day of week", net_last3: "Net flow, last 3 h" };
+  hbars($("fig-imp"), F.importance.map((r, i) => ({ name: names[r.feature] ?? r.feature, v: r.mae_up, ours: i === 0,
+    tip: `Scrambling it adds ${r.mae_up.toFixed(2)} bikes to the average miss` })), { fmt: (v) => v.toFixed(2), labelW: 210 });
+}
+
+function drawCov() {
+  const rows = DATA.meta.horizons.map((h) => { const s = DATA.scorecard[h];
+    return `<tr${h === state.h ? ' style="font-weight:600"' : ""}><td>${h} h</td><td class="num">${pct(s.coverage_l2_raw, 1)}</td><td class="num">${pct(s.coverage_l2, 1)}</td><td class="num">${s.band_width_l2.toFixed(1)}</td></tr>`; });
+  $("cov-table").innerHTML = `<thead><tr><th>Look ahead</th><th class="num">Range held, as trained</th><th class="num">Self-corrected (target 80%)</th><th class="num">Average width, bikes</th></tr></thead><tbody>${rows.join("")}</tbody>`;
+}
+
+function drawRetrain() {
+  const R = DATA.retrain[String(state.h)];
+  const rows = Object.entries(R).map(([y, v]) => {
+    const best = Math.min(...[v.never_retrained, v.retrained, v.last_4_weeks].filter((x) => x != null));
+    const c = (x) => x == null ? `<td class="num muted">same (first test year)</td>` : `<td class="num">${x === best ? "<b>" + x.toFixed(2) + "</b>" : x.toFixed(2)}</td>`;
+    return `<tr><td>${y}</td>${c(v.never_retrained)}${c(v.retrained)}${c(v.last_4_weeks)}</tr>`; });
+  $("retrain-table").innerHTML = `<thead><tr><th>Year (${state.h} h, miss on big windows)</th><th class="num">Never retrained (the map)</th><th class="num">Refit each year</th><th class="num">Last 4 weeks</th></tr></thead><tbody>${rows.join("")}</tbody>`;
+}
+
+function drawDec() {
+  const d = F.decision.by_h[String(state.h)];
+  const names = { l2: "Level 2", avg4w: "Last 4 weeks", usual: "Usual suspects", last_week: "Last week", random: "Random" };
+  $("dec-title").textContent = `Share of the top ${F.decision.k} picks that were really big, ${state.h} h, with 95% intervals`;
+  hbars($("fig-dec"), ["l2", "avg4w", "usual", "last_week", "random"].map((n) => ({ name: names[n], v: d.precision[n][0], lo: d.precision[n][1], hi: d.precision[n][2], ours: n === "l2",
+    tip: `${names[n]}: ${pct(d.precision[n][0], 1)} (${pct(d.precision[n][1], 1)} to ${pct(d.precision[n][2], 1)})` })), { fmt: (v) => pct(v), max: 0.6, labelW: 150 });
+  const df = d.l2_minus_avg4w;
+  $("dec-cap").innerHTML = `<b>Usual suspects</b> ranks stations by how big they typically are at that hour of the week (2022 and 2023 only). ` +
+    `Level 2 minus the 4-week average: <b>${sgn(df[0])} points</b> (${sgn(df[1])} to ${sgn(df[2])}). Most of a good shortlist is knowing which stations are usually big; the model adds a small, steady amount.`;
+}
+
+const over30 = (bins) => { const n = bins.reduce((t, b) => t + b[2], 0); return bins.filter((b) => b[0] >= 0.3).reduce((t, b) => t + b[2], 0) / n; };
+function drawEmpty() {
+  if (!A) { $("empty").hidden = true; return; }
+  const rows = DATA.meta.horizons.map((h) => { const v = A.by_h[String(h)];
+    const c = (e) => `<td class="num">${pct(e.rate, 1)}</td><td class="num">${sgn(e.skill[0])}% <span class="muted">(${sgn(e.skill[1])} to ${sgn(e.skill[2])})</span></td>`;
+    return `<tr${h === state.h ? ' style="font-weight:600"' : ""}><td>${h} h</td>${c(v.empty)}${c(v.full)}</tr>`; });
+  $("emp-table").innerHTML = `<thead><tr><th>Look ahead</th><th class="num">Empty: happened</th><th class="num">Empty: skill</th><th class="num">Full: happened</th><th class="num">Full: skill</th></tr></thead><tbody>${rows.join("")}</tbody>`;
+
+  const e = A.by_h[String(state.h)].empty;
+  $("cal-title").textContent = `Does "a 30% chance" happen 30% of the time? Empty, ${state.h} h, August and September 2025`;
+  const W = 700, H = 330, L = 52, R = 150, T = 10, B = 40;
+  const x = (v) => L + v * (W - L - R), y = (v) => H - B - v * (H - T - B);
+  let g = "";
+  for (const v of [0, 0.2, 0.4, 0.6, 0.8, 1]) {
+    g += `<line x1="${x(0)}" x2="${x(1)}" y1="${y(v)}" y2="${y(v)}" stroke="var(--rule)"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v * 100}%</text>`;
+    g += `<text x="${x(v)}" y="${H - B + 18}" text-anchor="middle">${v * 100}%</text>`;
+  }
+  g += `<line x1="${x(0)}" y1="${y(0)}" x2="${x(1)}" y2="${y(1)}" stroke="var(--neutral)" stroke-width="1.5" stroke-dasharray="3 4"/>`;
+  g += `<text x="${x(1) + 8}" y="${y(1) + 4}" class="lab2">perfectly honest</text>`;
+  for (const [key, name, col, dash] of [["p_direct", "Model's raw range", "var(--ink-3)", "5 4"], ["p_cal", "Recalibrated", "var(--ink)", ""]]) {
+    const c = e.calibration[key].filter((b) => b[2] >= 50);
+    g += `<polyline fill="none" stroke="${col}" stroke-width="2" stroke-dasharray="${dash}" points="${c.map((b) => `${x(b[0])},${y(b[1])}`).join(" ")}"/>`;
+    for (const b of c) g += `<circle data-tip="${name}: said ${Math.round(b[0] * 100)}%, empty ${Math.round(b[1] * 100)}% of the time, ${b[2].toLocaleString()} windows" cx="${x(b[0])}" cy="${y(b[1])}" r="5" fill="${col}" stroke="var(--panel)" stroke-width="2"/>`;
+    const last = c[c.length - 1];
+    g += `<text x="${x(last[0]) + 10}" y="${y(last[1]) + 4}" class="${key === "p_cal" ? "lab" : "lab2"}">${name}</text>`;
+  }
+  g += `<text x="${(L + W - R) / 2}" y="${H - 4}" text-anchor="middle">Stated chance of being empty</text>`;
+  g += `<text transform="translate(12 ${(T + H - B) / 2}) rotate(-90)" text-anchor="middle">How often it was empty</text>`;
+  $("fig-cal").innerHTML = g;
+  hookTips($("fig-cal"));
+  const top = e.calibration.p_direct[e.calibration.p_direct.length - 1];
+  const blocks = Object.entries(e.by_hour_block).sort((a, b) => b[1][0] - a[1][0]);
+  $("cal-cap").innerHTML = `Read straight from the model's range, the chance is far too sure: when it says <b>${Math.round(top[0] * 100)}%</b>, the station is empty <b>${Math.round(top[1] * 100)}%</b> of the time, ` +
+    `and it scores ${pct(Math.abs(e.direct_skill))} worse than the baseline. Recalibrated, the stated chance matches what happens, ` +
+    `but it says more than 30% for only ${pct(over30(e.calibration.p_cal), 1)} of windows, and it beats the baseline by <b>${sgn(e.skill[0])}%</b> (${sgn(e.skill[1])} to ${sgn(e.skill[2])}), most when the window starts ${blocks[0][0].replace("-", ":00 to ")}:00 (${sgn(blocks[0][1][0])}%).`;
+
+  const t = A.truck[String(state.h)];
+  const label = { "00-06": "00:00 to 06:00", "06-10": "06:00 to 10:00", "10-15": "10:00 to 15:00", "15-20": "15:00 to 20:00", "20-24": "20:00 to 24:00" };
+  $("truck-title").textContent = `Bikes the trips miss, ${state.h} h windows, by start time (May to September 2025)`;
+  const blocksT = Object.entries(t.by_block);
+  const peak = Math.max(...blocksT.map(([, v]) => v[0]));
+  hbars($("fig-truck"), blocksT.map(([k, v]) => ({ name: label[k], v: v[0], ours: v[0] === peak,
+    tip: `${label[k]}: real stock and trips differ by ${v[0].toFixed(1)} bikes on average (net ${v[1] >= 0 ? "+" : "−"}${Math.abs(v[1]).toFixed(1)})` })),
+    { fmt: (v) => v.toFixed(1), labelW: 150 });
+  $("truck-cap").innerHTML = `Average gap, in bikes, between the real change in bikes at a station and the trip count. Over ${state.h} h the two correlate only <b>${t.corr.toFixed(2)}</b>; ` +
+    `trips average ${t.trip.toFixed(1)} bikes of net flow, the gap averages <b>${t.gap.toFixed(1)}</b>, and ${pct(t.gap5)} of windows differ by 5 bikes or more. The gap peaks in the rush hours, when trucks rebalance. ` +
+    `Timing was checked: the match peaks at zero offset and vanishes an hour either way.`;
+}
+
+function drawModelStudy() {
+  const MS = F.model_study;
+  if (!MS) return;
+  const hs = ["1", "3", "6"], names = MS.by_h["3"].rows.map((r) => r[0]);
+  const cell = (r) => `<td class="num">${r[4] === "tie" ? '<span class="muted">no difference</span>' : `${sgn(r[1])}%`}</td>`;
+  const rows = names.map((n, i) => `<tr><td>${n}</td>${hs.map((h) => cell(MS.by_h[h].rows[i])).join("")}</tr>`);
+  $("ms-table").innerHTML = `<thead><tr><th>Change</th><th class="num">1 h</th><th class="num">3 h</th><th class="num">6 h</th></tr></thead><tbody>${rows.join("")}</tbody>`;
+  $("ms-text").textContent = "Change in the miss on big windows; positive means the variant misses more. Seasonal memory carries the model, more so the further ahead it looks. " +
+    "Neighbouring stations add almost nothing, and forecasting the two flows separately is no better, so the simpler model stays.";
+}
+
+function drawExample() {
+  const X = F.examples;
+  if (!X || !X.hit) return;
+  const E = X.hit, L = X.limit, pc = (x) => `${Math.round(x * 100)}%`;
+  const bk = (n, w) => `${n} ${w}${n === 1 ? "" : "s"}`;
+  $("ex-net").innerHTML = `<b>Running example.</b> ${E.name}, ${E.when}. Over those 3 hours the trips give <i>y</i> = <b>+${E.trip_net} bikes</b>: ` +
+    `far more arrived than left. Section 11 asks whether that matters for this station.`;
+  const ev = E.event === "full" ? "full" : "empty";
+  const what = E.event === "full" ? `<i>d</i> = ${bk(E.docks, "free dock")} (and ${bk(E.bikes, "bike")})` : `<i>b</i> = ${bk(E.bikes, "bike")}`;
+  const formula = E.event === "full" ? `1 − Φ(${E.z}) = <b>${pc(E.p_raw)}</b>` : `Φ(${E.z}) = <b>${pc(E.p_raw)}</b>`;
+  $("ex-prob").innerHTML = `<b>Running example, continued.</b> At 17:00 ${E.name} had ${what}. ` +
+    `The forecast was μ = +${E.mu}, with an 80% range of ${E.lo} to ${E.hi}, so σ = ${E.sigma}. ` +
+    (E.event === "full" ? "Full is the mirror image of empty, with free docks in place of bikes: " : "The formula gives ") +
+    `${formula} chance of being ${ev} by 20:00; recalibrated, <b>${pc(E.p_cal)}</b>, enough to rank it ${E.rank}${[,'st','nd','rd'][E.rank] && E.rank < 4 ? ['','st','nd','rd'][E.rank] : 'th'} of the 10 stations a truck should check at that hour. ` +
+    `It <b>${E.outcome === "full" ? "filled up" : E.outcome === "empty" ? "ran empty" : "stayed fine"}</b>. ` +
+    `The forecast caught the direction, and the stock made it urgent: with only ${bk(E.docks, "free dock")}, a gain of ${Math.round(E.mu)} bikes leaves no room.`;
+  if (L) $("ex-limit").innerHTML = `<b>A pick that did not work.</b> In the same list, at rank ${L.rank}: ${L.name} had ${bk(L.bikes, "bike")} at 17:00 and a forecast of ${L.mu}, ` +
+    `so the formula said ${pc(L.p_raw)} chance of being empty (recalibrated ${pc(L.p_cal)}). The trips that evening really were ${L.trip_net} bikes, so the forecast was right about demand, ` +
+    `yet the station never ran empty. A station that starts with ${bk(L.bikes, "bike")} cannot lose ${-L.trip_net} on its own: to still have a bike at 20:00, something must have put at least ` +
+    `${-L.trip_net - L.bikes + 1} bikes back in, most likely BIXI's trucks. <span class="muted">Both stations are illustrations, each picked by a rule written in advance; the evidence is the aggregate results in sections 11 and 12.</span>`;
+}
+
+function drawTrucks() {
+  const D = F.decision_study && F.decision_study.by_h[String(state.h)];
+  if (!D) { $("trucks").hidden = true; return; }
+  const names = { both: "Stock + forecast", stock: "Stock only", size: "Forecast size", random: "Random" };
+  $("trk-title").textContent = `Share of the 10 picks that really ended empty or full, ${state.h} h, August and September 2025`;
+  hbars($("fig-trk"), ["both", "stock", "size", "random"].map((n) => ({ name: names[n], v: D.precision[n][0],
+    lo: n === "random" ? null : D.precision[n][1], hi: n === "random" ? null : D.precision[n][2], ours: n === "both",
+    tip: `${names[n]}: ${pct(D.precision[n][0], 1)}` })), { fmt: (v) => pct(v), labelW: 150 });
+  const d = D.both_vs_stock;
+  $("trk-cap").innerHTML = `Ranking by forecast size finds problem stations ${D.precision.size[0] < D.precision.random[0] * 1.15 ? "about as often as" : "barely more often than"} picking at random (${pct(D.precision.size[0], 1)} against ${pct(D.precision.random[0], 1)}). ` +
+    `Knowing the stock now is what matters (${pct(D.precision.stock[0], 1)}). Adding the forecast: <b>${sgn(d[0])} points</b> (${sgn(d[1])} to ${sgn(d[2])}), ` +
+    `${D.both_vs_stock_verdict === "better" ? "a small but real gain" : "within the noise at this look-ahead"}.`;
+}
+
+function drawAll() {
+  drawShort(); drawExample(); drawBase(); drawModelStudy(); drawCov(); drawRetrain(); drawDec(); drawEmpty(); drawTrucks();
+}
+
+drawPipeline(); drawTimeline(); drawImp(); drawAll();
+
+// Highlight the section being read in the contents list.
+const links = [...document.querySelectorAll("nav.toc a")];
+const io = new IntersectionObserver((es) => es.forEach((en) => {
+  if (en.isIntersecting) links.forEach((a) => a.classList.toggle("on", a.getAttribute("href") === `#${en.target.id}`));
+}), { rootMargin: "-30% 0px -60% 0px" });
+document.querySelectorAll("main section").forEach((s) => io.observe(s));
+</script>
+</body>
+</html>
