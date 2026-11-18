@@ -36,6 +36,12 @@ def problem_chance(p_empty, p_full):
     return np.maximum(p_empty, p_full)
 
 
+def real_change(d):
+    """Real change in bikes at the station over the window: available plus disabled, end minus start (the same
+    measure as the truck effect in s05e). Shown on the map's 2025 station chart; not used in any score."""
+    return ((d.num_bikes_available1 + d.num_bikes_disabled1) - (d.num_bikes_available0 + d.num_bikes_disabled0)).astype(float)
+
+
 def candidate_windows(d):
     """Windows where the station is installed, renting and returning at both ends, with the raw chances."""
     ok = chk.in_service(d, "empty") & chk.in_service(d, "full")
@@ -112,11 +118,12 @@ def main():
         e = d[d.h == h]
         tr, te = e[e.month.isin(chk.TRAIN_MONTHS)], e[e.month.isin(chk.TEST_MONTHS)]
         te = add_scores(te, *fit_recal(tr))             # fitted on May to July, every in-service window
-        keep.append(te[["station_id", "hour_idx", "h", "bikes0", "docks0", "both", "is_empty1", "is_full1"]])
+        keep.append(te.assign(real_change=real_change(te))[["station_id", "hour_idx", "h", "bikes0", "docks0", "both",
+                                                            "is_empty1", "is_full1", "real_change"]])
         res = score_rankings(te, h)
         R["horizons"][str(h)] = res
         p = res["precision"]
-        print(f"{h}h  times={len(T)}  base={res['base_rate']:.3f}  size={p['size'][0]:.3f}  stock={p['stock'][0]:.3f}  "
+        print(f"{h}h  times={res['decision_times']}  base={res['base_rate']:.3f}  size={p['size'][0]:.3f}  stock={p['stock'][0]:.3f}  "
               f"both={p['both'][0]:.3f}  random={p['random'][0]:.3f}  "
               + "  ".join(f"{k}:{v['verdict']}" for k, v in res["paired"].items()))
     pd.concat(keep, ignore_index=True).to_parquet(INTERIM / "stock_forecast_2025.parquet", index=False)

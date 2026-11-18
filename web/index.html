@@ -237,6 +237,7 @@
   .k-band { width: 20px; height: 11px; background: rgba(0, 0, 0, .13); border-radius: 2px; }
   .k-in { width: 8px; height: 8px; border-radius: 50%; border: 1.6px solid #7a46c9; }
   .k-out { width: 9px; height: 9px; border-radius: 50%; background: #7a46c9; }
+  .k-real { width: 8px; height: 8px; background: #00876f; transform: rotate(45deg); border-radius: 1px; }
   .zoom { display: flex; gap: 6px; align-items: center; }
   .zoom button { border: 1px solid var(--rule); background: transparent; border-radius: 7px; padding: 5px 11px; cursor: pointer; font-size: 13px; }
   .zoom button:hover { border-color: var(--ink-3); }
@@ -436,6 +437,7 @@
         <span><i class="k-band"></i>Likely range (80%)</span>
         <span><i class="k-in"></i>Happened (trips), inside the range</span>
         <span><i class="k-out"></i>Happened (trips), outside the range</span>
+        <span id="key-real" hidden><i class="k-real"></i>Real change in bikes (station counts)</span>
       </div>
       <div class="zoom" role="group" aria-label="Zoom the chart">
         <button data-span="24">Day</button><button data-span="72">3 days</button><button data-span="168">Week</button>
@@ -1002,7 +1004,9 @@ function drawStation() {
     const clear = r.lo > 0 || r.hi < 0;
     $("s-range").textContent = `Likely range ${signed(r.lo)} to ${signed(r.hi)}. ${clear ? "The direction is clear." : "It could go either way."}`;
     const inside = r.actual >= r.lo && r.actual <= r.hi;
-    $("s-happened").textContent = `What happened (trip net flow): ${signed(r.actual)}, ${inside ? "inside" : "outside"} the range.`;
+    const real = F().real ? F().real[state.hour][state.selected] : null;
+    $("s-happened").textContent = `What happened (trip net flow): ${signed(r.actual)}, ${inside ? "inside" : "outside"} the range.` +
+      (F().real ? (real == null ? " Real change in bikes: not known for this window." : ` Real change in bikes (station counts): ${signed(real)}.`) : "");
   }
   // One chip per look-ahead, showing this station's forecast at this hour.
   $("s-chips").innerHTML = "";
@@ -1031,12 +1035,13 @@ function drawChart(hover = null) {
   if (state.selected == null) return;
   const si = state.selected, { W, H, L, R, T, B } = CH;
   const col = (name) => F()[name].map((row) => row[si]);
-  const f = col("forecast"), lo = col("low"), hi = col("high"), ac = col("actual");
+  const f = col("forecast"), lo = col("low"), hi = col("high"), ac = col("actual"), rc = F().real ? col("real") : null;
+  $("key-real").hidden = !rc;
   const svg = $("chart");
   document.querySelectorAll(".zoom [data-span]").forEach((b) => b.setAttribute("aria-pressed", String(Math.abs(view.span - +b.dataset.span) < 0.5)));
   const i0 = Math.max(0, Math.floor(view.start) - 1), i1 = Math.min(N_HOURS - 1, Math.ceil(view.start + view.span));
   const seen = [];
-  for (let i = i0; i <= i1; i++) if (f[i] != null) seen.push(lo[i], hi[i], ac[i]);
+  for (let i = i0; i <= i1; i++) if (f[i] != null) { seen.push(lo[i], hi[i], ac[i]); if (rc && rc[i] != null) seen.push(rc[i]); }
   if (!seen.length) { svg.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle">No forecasts for this station in this period</text>`; return; }
   // Zero stays in the middle. The scale follows what is on screen, so zooming in also zooms the bikes axis.
   const top = Math.max(4, Math.max(...seen.map(Math.abs)) * 1.12);
@@ -1079,6 +1084,11 @@ function drawChart(hover = null) {
     plot += out ? `<circle cx="${x(i)}" cy="${y(ac[i])}" r="${big ? 4.5 : 3.2}" fill="${VIOLET}" stroke="#ffffff" stroke-width="1.2"/>`
                 : `<circle cx="${x(i)}" cy="${y(ac[i])}" r="${big ? 3.6 : 2.4}" fill="#ffffff" stroke="${VIOLET}" stroke-width="1.6"/>`;
   }
+  if (rc) for (let i = i0; i <= i1; i++) {
+    if (f[i] == null || rc[i] == null) continue;
+    const cx = x(i), cy = y(rc[i]), r = big ? 5 : 3.6;
+    plot += `<path d="M${cx},${cy - r}L${cx + r},${cy}L${cx},${cy + r}L${cx - r},${cy}Z" fill="#00876f" stroke="#ffffff" stroke-width="1.2"/>`;
+  }
   g += `<g clip-path="url(#plot)">${plot}</g>`;
   // The hour the map is showing.
   if (state.hour + 1 > view.start && state.hour < view.start + view.span) {
@@ -1095,7 +1105,8 @@ function drawChart(hover = null) {
     if (f[hover] == null) tip.innerHTML = `${when}<br><span class="muted">No forecast (out of service)</span>`;
     else {
       const out = ac[hover] < lo[hover] || ac[hover] > hi[hover];
-      tip.innerHTML = `${when}<br>Forecast ${signed(f[hover])} <span class="muted">(${signed(lo[hover])} to ${signed(hi[hover])})</span><br>Happened (trips) ${signed(ac[hover])} <span class="muted">${out ? "outside the range" : "inside the range"}</span>`;
+      tip.innerHTML = `${when}<br>Forecast ${signed(f[hover])} <span class="muted">(${signed(lo[hover])} to ${signed(hi[hover])})</span><br>Happened (trips) ${signed(ac[hover])} <span class="muted">${out ? "outside the range" : "inside the range"}</span>` +
+        (rc ? `<br>Real change (station counts) ${rc[hover] == null ? '<span class="muted">not known</span>' : signed(rc[hover])}` : "");
     }
     tip.style.display = "block";
     const frac = hx / W, box = svg.getBoundingClientRect();

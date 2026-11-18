@@ -177,7 +177,8 @@ def week_payload(p, top, start, stock=None):
             s = stock[(stock.h == h) & stock.hour_idx.between(hours[0], hours[-1])].assign(
                 outcome=lambda x: np.where(x.is_empty1 == 1, 1, np.where(x.is_full1 == 1, 2, 0)))
             forecasts[h].update({"bikes": grid(s, "bikes0", 0), "docks": grid(s, "docks0", 0),
-                                 "chance": grid(s, "both", 3), "outcome": grid(s, "outcome", 0)})
+                                 "chance": grid(s, "both", 3), "outcome": grid(s, "outcome", 0),
+                                 "real": grid(s, "real_change", 0)})
         w = d.groupby("hour_idx")[["temp_fc", "precip_fc"]].first().reindex(hours)
         weather[h] = {"temp": [None if np.isnan(v) else round(float(v), 1) for v in w.temp_fc],
                       "precip": [None if np.isnan(v) else round(float(v), 1) for v in w.precip_fc]}

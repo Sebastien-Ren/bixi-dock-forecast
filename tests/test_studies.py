@@ -41,3 +41,9 @@ def test_flow_targets_by_hand():
     df = pd.DataFrame({"station_id": [1, 1], "hour_idx": [0, 1]})
     arr, dep = ms.flow_targets(hourly, df, 3)
     assert arr.tolist() == [6.0, 9.0] and dep.tolist() == [1.0, 3.0]      # hours 0-2 and 1-3
+
+
+def test_real_change_counts_disabled_bikes_and_is_end_minus_start():
+    d = pd.DataFrame({"num_bikes_available0": [10, 3], "num_bikes_disabled0": [1, 0],
+                      "num_bikes_available1": [4, 8], "num_bikes_disabled1": [2, 0]})
+    assert ds.real_change(d).tolist() == [-5.0, 5.0]       # (4 + 2) - (10 + 1), and 8 - 3
