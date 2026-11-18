@@ -218,7 +218,7 @@ A dispatcher can look at only a few stations at a time. At each decision time (e
 - **precision@K**: the share of the K picks that were big.
 - **capture@K**: picks that were big, divided by the smaller of K and the number of big windows at that time (1.0 = a perfect ranking). Times with no big window are left out.
 - **Usual suspects**: each station's typical |net| for that hour of the week, from 2022 and 2023 only. It shows how much of the skill is just 'downtown stations are always big at rush hour'.
-- **Random**: the exact expected result of picking at random.
+- **Random**: the exact expected result of picking at random from the same candidates. Every ranking picks from the busiest 100 stations in service at that time (median 85), not from the whole network.
 
 ### Headline: top 10 picks
 
@@ -410,7 +410,7 @@ Real change in bikes at the station (available plus disabled) against the trip-b
 
 ## 13. Which stations should a truck go to?
 
-At each decision time, three rankings pick 10 stations, scored on real station counts (August and September 2025, as in section 12). A pick counts if the station really is empty or full at the end of the window. Fixed before results (plan/06). **Forecast size** is what the map's shortlist does; **stock only** picks the stations closest to empty or full right now; **stock + forecast** uses the chance of ending empty or full (section 12's method, recalibrated on May to July). BIXI's own rule is not scored: these counts already include what its trucks did under that rule.
+At each decision time, three rankings pick 10 stations, scored on real station counts (August and September 2025, as in section 12). A pick counts if the station really is empty or full at the end of the window. Fixed before results (plan/06). **Forecast size** is what the map's shortlist does; **stock only** picks the stations closest to empty or full right now; **stock + forecast** uses the chance of ending empty or full (section 12's method, recalibrated on May to July). BIXI's own rule is not scored: these counts already include what its trucks did under that rule. **Random** picks from the same candidates (the busiest 100 stations in service at both ends of the window, median 82), not the whole network.
 
 | Horizon | Decision times | Share of candidates that end up a problem | Forecast size | Stock only | Stock + forecast | Random | Stock + forecast minus stock only |
 |---|---|---|---|---|---|---|---|

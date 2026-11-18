@@ -35,7 +35,7 @@ All tests are forward: the model learns from summers 2022 and 2023 only and is s
 
 A plain 4-week average of the same time slot is a hard baseline; the model beats it at 3 and 6 hours, not at 1. The 80% range holds 80% of outcomes after a daily self-correction. Retraining each year would cut the 2026 miss by 3% to 5%.
 
-**2. As a shortlist of big moves.** At each 3-hour decision time, 43% of Level 2's top 10 stations really had a big net flow, against 41% for the 4-week average and 11% for random picks: a 2-point edge (1.7 to 2.3), the same in each year.
+**2. As a shortlist of big moves.** At each 3-hour decision time, 43% of Level 2's top 10 stations really had a big net flow, against 41% for the 4-week average and 11% for 10 random picks from the same stations: a 2-point edge (1.7 to 2.3), the same in each year.
 
 **3. Will a station run empty or full?** Scored on real station counts from summer 2025 (past snapshots of BIXI's station feed kept by a public archive). For stations not already empty, the forecast's chance of being empty 3 hours later beats a baseline that only knows how many bikes are there now by 1.1% of the Brier score (0.3% to 1.7%); for full, by 1.7%. Rerun once on a sealed month, September 2024, with nothing refitted, it holds: +3.6% for empty and +1.7% for full. Read straight from the model's range, the chance is far too sure (when it says 90%, the station is empty about 20% of the time) because of the **truck effect**: over 3 hours, the real change in bikes and the trip-based net flow correlate only 0.47.
 
@@ -48,7 +48,7 @@ A plain 4-week average of the same time slot is a hard baseline; the model beats
 | Stock now + forecast | **33%** | **21%** | **15%** |
 | Random | 10% | 10% | 10% |
 
-Ranking by forecast size alone is about as good as random for finding stations that will be empty or full: a big station can lose 30 bikes and be fine. The bike count right now matters most; the forecast adds a little on top, within the noise in most tests. The same order held on the sealed September 2024 month (21%, 20%, 9% and 9% at 3 hours). BIXI's own rule is not scored, because these counts already include what its trucks did.
+Every ranking, random included, picks from the same pool: the busiest 100 stations that are in service at that hour (about 85), not the whole network. Ranking by forecast size alone is about as good as random for finding stations that will be empty or full: a big station can lose 30 bikes and be fine. The bike count right now matters most; the forecast adds a little on top, within the noise in most tests. The same order held on the sealed September 2024 month (21%, 20%, 9% and 9% at 3 hours). BIXI's own rule is not scored, because these counts already include what its trucks did.
 
 **5. What the model needs.** Refitting with one change at a time: without seasonal memory (the same window yesterday, last week, over 4 weeks) the miss grows 11% to 35%; without calendar and place 4% to 6%; without recent activity 2% to 3%; without weather 1% to 4%. Adding neighbouring stations helps by under 0.5%, and forecasting arrivals and departures separately is no better, so the simpler model stays.
 
@@ -66,6 +66,7 @@ Every table: [reports/RESULTS.md](reports/RESULTS.md). Plain-language results an
 
 ## Limits
 
+- **Only the 100 busiest stations.** Every result, including the comparisons with random picks, is measured within them. Quieter stations were not tested and may behave differently (sparser, noisier traffic).
 - Trips do not record trucks moving bikes, so trip net flow is not the real change in stock.
 - The edges over simple rules are real but small.
 - No event calendar: the largest misses are rare extreme hours.

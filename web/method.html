@@ -198,7 +198,7 @@
 <table id="retrain-table"></table>
 
 <div class="label" id="decision">10/ From forecast to decision</div>
-<p>A dispatcher needs to know which few stations to check. So the forecast is also scored as a shortlist: at each decision time, take the <i>K</i> = 10 largest forecasts and count how many really had a big window.</p>
+<p>A dispatcher needs to know which few stations to check. So the forecast is also scored as a shortlist: at each decision time, take the <i>K</i> = 10 largest forecasts and count how many really had a big window. Every ranking, including random picks, chooses from the same pool: the busiest 100 stations in service at that hour, about 85, not the whole network.</p>
 <div class="eq">
   <math display="block"><mtext>precision@</mtext><mi>K</mi><mo>=</mo><mfrac><mtext>picks that were really big</mtext><mrow><mi>K</mi><mo>&#xD7;</mo><mtext>decision times</mtext></mrow></mfrac></math>
   <div class="say">Decision times are every hour at the 1-hour look-ahead and every 3 or 6 hours at the others, so no window counts twice. Rankings see only forecasts.</div>
@@ -251,6 +251,7 @@
   <li><b>Forecast size</b>: the largest predicted change, as in section 10.</li>
   <li><b>Stock only</b>: the stations closest to empty or full right now. No forecast.</li>
   <li><b>Stock + forecast</b>: the chance of ending empty or full, from section 11.</li>
+  <li><b>Random</b>: 10 stations drawn from the same pool, the busiest stations in service at both ends of the window.</li>
 </ul>
 <figure>
   <div class="ftitle" id="trk-title"></div>
@@ -263,6 +264,7 @@
 
 <div class="label" id="limits">13/ Limits</div>
 <ul class="plain">
+  <li><b>Only the 100 busiest stations.</b> Every result, including "better than random", is measured within them; quieter stations were not tested.</li>
   <li><b>Trucks are invisible in trips</b>, so trip net flow is not the real change in stock (section 11).</li>
   <li><b>Small edges.</b> 1% to 8% over a 4-week average on big windows, about 2 points on the shortlist, 1% to 2.4% on empty stations.</li>
   <li><b>No event calendar.</b> The worst misses are festivals and matches.</li>

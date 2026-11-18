@@ -26,7 +26,7 @@ A dispatcher can visit only a few stations, so the forecast is also scored as a 
 | 3 hours | 43.4% | 41.4% | 39.5% | 11.2% | +2.0 points (1.7 to 2.3) |
 | 6 hours | 50.6% | 48.8% | 45.9% | 10.8% | +1.8 points (1.4 to 2.2) |
 
-*Usual suspects* ranks stations by their typical |net| for that hour of the week in 2022 and 2023. It shows how much of the result is just "downtown stations are big at rush hour".
+*Usual suspects* ranks stations by their typical |net| for that hour of the week in 2022 and 2023. It shows how much of the result is just "downtown stations are big at rush hour". *Random* draws 10 of the same candidates: every ranking picks from the busiest 100 stations that are in service at that time (about 85), never from the whole network, so "better than random" means better than a random pick among busy stations.
 
 - **Level 2 is better than every simple ranking at every K and horizon**, and the lead holds in 2024, 2025 and 2026 (3 hours, K = 10: +2.1, +2.0, +1.9 points). It is small: about 2 points.
 - **Most of the value is knowing which stations are usually big.** The 4-week average is no better than the usual suspects at 1 hour, and only 2 to 3 points better at 3 and 6 hours.
@@ -99,6 +99,7 @@ Seasonal memory carries the model. Neighbours add almost nothing and two flows a
 ## Limits to keep in mind
 
 - Net flow here is built from trips. Trucks moving bikes and bikes pulled for repair are not trips, so this is not the real change in docked bikes. Measured on summer 2025, the two correlate only about 0.47 (see above).
+- Only the 100 busiest stations are forecast and scored. Every comparison, random picks included, is within them; quieter stations were not tested.
 - The network changes. Of the 100 stations ranked on 2022 and 2023, 94 were in service in summer 2024, 91 in 2025 and 85 in 2026. Stations that closed or moved more than a block get no forecast.
 - The map shows the never-retrained model. The retrained copy is scored on the method page (results section) but does not draw the circles.
 - The trip-based backtest (2024 to 2026) has no sealed set of dates: it was read once and nothing was tuned afterwards. The checks on real station counts were confirmed on a sealed month, September 2024, run once under a plan written before its data was downloaded.

@@ -852,7 +852,7 @@ function drawStock() {
     const row = (label, v, real) => `<div class="row" style="grid-template-columns:104px 1fr 38px"><span>${label}</span><span class="track"><span class="fill${real ? " real" : ""}" style="display:block;width:${(v * 100 / 0.4).toFixed(1)}%"></span></span><span class="v">${Math.round(v * 100)}%</span></div>`;
     $("stock-rank").innerHTML = row("Stock + forecast", D.precision.both[0], true) + row("Stock only", D.precision.stock[0]) +
       row("Forecast size", D.precision.size[0]) + row("Random", D.precision.random[0]);
-    $("stock-d").textContent = `Share of 10 picks that really were empty or full ${state.h} h later. Picking by forecast size is ${D.precision.size[0] < D.precision.random[0] * 1.15 ? "about as good as" : "barely better than"} random; ` +
+    $("stock-d").textContent = `Share of 10 picks that really were empty or full ${state.h} h later. Picking by forecast size is ${D.precision.size[0] < D.precision.random[0] * 1.15 ? "about as good as" : "barely better than"} random picks among these same busy stations; ` +
       `picking the stations closest to empty or full now is far better, and the forecast adds ${D.both_vs_stock_verdict === "better" ? "a little more" : "a little, within the noise at this look-ahead"}.` + (DATA.meta.has_stock ? " This week, tab 1 uses the stock + forecast ranking." : " Switch to the 2025 week to see that ranking on the map.");
   }
   const C = DATA.findings.confirmation, cd = C && C.decision[h];

@@ -81,7 +81,9 @@ def decision_section(dc):
           "(1.0 = a perfect ranking). Times with no big window are left out.",
           "- **Usual suspects**: each station's typical |net| for that hour of the week, from 2022 and 2023 only. "
           "It shows how much of the skill is just 'downtown stations are always big at rush hour'.",
-          "- **Random**: the exact expected result of picking at random.", ""]
+          "- **Random**: the exact expected result of picking at random from the same candidates. Every ranking picks "
+          "from the busiest 100 stations in service at that time (median " + f"{dc['main']['3']['median_candidates']:.0f}" + "), not from the "
+          "whole network.", ""]
 
     md += [f"### Headline: top {hk} picks", ""]
     rows = []
@@ -259,7 +261,8 @@ def decision_study_section(ds):
           "Fixed before results (plan/06). **Forecast size** is what the map's shortlist does; **stock only** picks the "
           "stations closest to empty or full right now; **stock + forecast** uses the chance of ending empty or full "
           "(section 12's method, recalibrated on May to July). BIXI's own rule is not scored: these counts already include "
-          "what its trucks did under that rule.", ""]
+          "what its trucks did under that rule. **Random** picks from the same candidates (the busiest 100 stations in service at "
+          f"both ends of the window, median {ds['horizons']['3']['median_candidates']:.0f}), not the whole network.", ""]
     rows = []
     for h, r in ds["horizons"].items():
         p, pr = r["precision"], r["paired"]
