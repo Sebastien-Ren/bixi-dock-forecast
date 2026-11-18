@@ -21,6 +21,8 @@ $PY src/s05e_availability_check.py # past station counts (2025) -> empty/full pr
                                  # needs: $PY src/archive/build_inventory.py 2025-05-01 2025-06-01 (and each month to 2025-10-01); skips if absent
 $PY src/s05f_model_study.py       # ablation, neighbours, two flows -> reports/model_study.json (about 20 min)
 $PY src/s05g_decision_study.py    # which 10 stations to check, on real 2025 counts -> reports/decision_study.json
+$PY src/s05h_confirmation.py      # sealed one-time rerun of s05e/s05g on September 2024 -> reports/confirmation_2024_09.json
+                                 # needs: $PY src/archive/build_inventory.py 2024-09-01 2024-10-01; never reruns once its file exists (plan/07)
 $PY src/s06_report.py            # forecasts       -> reports/RESULTS.md and metrics.json
 $PY src/s07_export_map.py        # last week       -> web/data/forecast.json
 echo "Done. Run ./run_map.sh to open the map."

@@ -297,6 +297,52 @@ def model_study_section(ms):
     return md
 
 
+def confirmation_section(cf, av, ds):
+    """Section 15: sections 12 and 13 rerun once on a sealed month, September 2024 (src/s05h_confirmation.py)."""
+    v, cov = cf["verdict"], cf["coverage"]
+    md = ["## 15. Sealed confirmation: September 2024", "",
+          "Sections 12 and 13 were built and read on summer 2025. Here both are rerun, unchanged and **once**, on a month "
+          "nobody had looked at: September 2024, under a plan written before its snapshots were downloaded "
+          "(plan/07-sealed-confirmation-sept-2024.md). Nothing is fitted on it: the starting-count table and the "
+          "recalibrations are the ones fitted on May to July 2025. Level 2 never trained on 2024. "
+          f"{cov['matched_stations']} of {cov['of_stations']} stations match; {cov['snapshots']:,} snapshots on "
+          f"{cov['days_with_windows']} days; {cov['with_both_snapshots']:,} forecast windows with a count at both ends.", "",
+          "Written down before the run: confirmed if, at 3 h, (1) stock + forecast and stock only are both clearly above "
+          "forecast size, and (2) the calibrated chance is not worse than the starting-count rate, for empty and for full.", "",
+          f"**Result: {'confirmed' if v['confirmed'] else 'not confirmed'}.** Ranking order: "
+          f"{'holds' if v['ranking_order']['holds'] else 'fails'}; empty/full skill: "
+          f"{'holds' if v['empty_full_skill']['holds'] else 'fails'}.", ""]
+    rows = []
+    for h, r in cf["decision"].items():
+        p, ref = r["precision"], ds["horizons"][h]["precision"]
+        rows.append([f"{h} h", ivp(p["size"]), ivp(p["stock"]), ivp(p["both"]), f"{p['random'][0]:.1%}",
+                     ivpts(r["paired"]["both_vs_stock"]["diff"]) + ", " + r["paired"]["both_vs_stock"]["verdict"],
+                     f"{ref['size'][0]:.1%} / {ref['stock'][0]:.1%} / {ref['both'][0]:.1%}"])
+    md += ["### Which stations should a truck go to? (as section 13)", "",
+           table(rows, ["Horizon", "Forecast size", "Stock only", "Stock + forecast", "Random",
+                        "Stock + forecast minus stock only", "Aug–Sep 2025 (size / stock / both)"]), ""]
+    rows = []
+    for e in ("empty", "full"):
+        for h, r in cf["empty_full"][e]["horizons"].items():
+            hd, ref = r["headline"], av["events"][e]["horizons"][h]["headline"]
+            pr = hd["paired"]["p_cal_vs_p_rate"]
+            rows.append([e, f"{h} h", f"{hd['n']:,}", f"{hd['event_rate']:.1%}", skl(pr["skill"]), pr["verdict"],
+                         skl(ref["paired"]["p_cal_vs_p_rate"]["skill"])])
+    md += ["### Will the station be empty or full? (as section 12, stations not already empty or full)", "",
+           table(rows, ["Event", "Horizon", "Windows", "Happened", "Calibrated vs starting-count rate (skill)", "Verdict",
+                        "Aug–Sep 2025 skill"]), ""]
+    top = cf["empty_full"]["empty"]["horizons"]["3"]["calibration"]["p_direct"][-1]
+    md += ["The direct reading is still far too sure: in its top bin (mean stated "
+           f"{top['stated']:.0%}) the station was empty {top['happened']:.0%} of the time (empty, 3 h). "
+           "Truck effect, as in section 12: correlation between the real change in bikes and trip net flow "
+           + ", ".join(f"{t['corr']:.2f} at {h} h" for h, t in cf["truck_effect"].items()) + ".", "",
+           "What did not repeat: in 2025, stock + forecast beat stock only at 1 h; on September 2024 it is a tie at every "
+           "horizon. The forecast's extra over the stock count is within the noise. At 1 h the empty and full skills also "
+           "swap between the two periods (each is better in one and a tie in the other), so 1 h is the least stable "
+           "horizon; 3 h and 6 h hold in both.", ""]
+    return md
+
+
 def main():
     p = pd.read_parquet(PROCESSED / "predictions.parquet")
     top = pd.read_csv(PROCESSED / "top_stations.csv").set_index("station_id")
@@ -504,6 +550,11 @@ def main():
         mstudy = json.loads(msf.read_text())
         md += model_study_section(mstudy)
         M["model_study"] = mstudy
+    cff = REPORTS / "confirmation_2024_09.json"
+    if cff.exists() and avf.exists() and dsf.exists():
+        cf = json.loads(cff.read_text())
+        md += confirmation_section(cf, av, dstudy)
+        M["confirmation"] = cf
 
     M["validation"] = val
     M["retrain"] = retrain

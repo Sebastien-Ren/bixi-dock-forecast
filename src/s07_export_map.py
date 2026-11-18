@@ -91,6 +91,21 @@ def findings(metrics, preds=None):
                              "gap5": r(t["share_gap_5plus"], 3),
                              "by_block": {kk: [r(vv["mean_abs_gap"], 2), r(vv["mean_gap"], 2)] for kk, vv in t["by_hour_block"].items()}}
         out["availability"] = a
+    cf = metrics.get("confirmation")
+    if cf:              # the sealed one-time rerun on September 2024 (plan/07)
+        out["confirmation"] = {
+            "month": cf["confirmation_month"], "confirmed": cf["verdict"]["confirmed"],
+            "matched": cf["coverage"]["matched_stations"], "days": cf["coverage"]["days_with_windows"],
+            "decision": {h: {"precision": {n: iv(v["precision"][n]) for n in ("size", "stock", "both", "random")},
+                             "both_vs_stock": iv(v["paired"]["both_vs_stock"]["diff"]),
+                             "both_vs_stock_verdict": v["paired"]["both_vs_stock"]["verdict"]}
+                         for h, v in cf["decision"].items()},
+            "skill": {h: {e: iv(cf["empty_full"][e]["horizons"][h]["headline"]["paired"]["p_cal_vs_p_rate"]["skill"]) +
+                          [cf["empty_full"][e]["horizons"][h]["headline"]["paired"]["p_cal_vs_p_rate"]["verdict"]]
+                          for e in ("empty", "full")} for h in map(str, HORIZONS)},
+            "truck": {h: r(t["corr"], 3) for h, t in cf["truck_effect"].items()},
+            "direct_top": [r(x, 3) for x in (lambda b: (b["stated"], b["happened"]))(
+                cf["empty_full"]["empty"]["horizons"]["3"]["calibration"]["p_direct"][-1])]}
     return out
 
 

@@ -27,8 +27,8 @@ START_SLICES = [(1, 2), (3, 5), (6, 10_000)]
 HOUR_BLOCKS = [(0, 5, "00-06"), (6, 9, "06-10"), (10, 14, "10-15"), (15, 19, "15-20"), (20, 23, "20-24")]
 
 
-def load_snapshots():
-    files = sorted(INTERIM.glob(f"inventory_{YEAR}-*.parquet"))
+def load_snapshots(pattern=f"inventory_{YEAR}-*.parquet"):
+    files = sorted(INTERIM.glob(pattern))
     if not files:
         return None, []
     return [pd.read_parquet(f) for f in files], files
@@ -108,6 +108,64 @@ def compare(test, cols, y_col, baselines, forecasters):
     return out
 
 
+def event_windows(d, event):
+    """In-service windows for one event, with the raw chance read from Level 2's range and the persistence guess."""
+    count_col, _, now_col = EVENTS[event]
+    e = d[in_service(d, event)].copy()
+    direct = av.prob_empty_direct if event == "empty" else av.prob_full_direct
+    e["p_direct"] = direct(e[count_col], e.l2, e.l2_lo, e.l2_hi)
+    e["p_persist"] = e[now_col].astype(float)
+    return e
+
+
+def fit_event(tr, event):
+    """The only fitted parts: the starting-count rate table, and the recalibration on the headline population
+    (stations not already empty / full). Both learned from the training windows `tr` of one horizon."""
+    count_col, y_col, now_col = EVENTS[event]
+    rate = av.rate_table(tr, count_col, y_col)
+    cal_fit = tr[tr[now_col] == 0]
+    return rate, av.recalibrate(cal_fit.p_direct.values, cal_fit[y_col].values)
+
+
+def score_event(te, event, rate, cal):
+    """Score one horizon's test windows with already-fitted parts. Fits nothing."""
+    count_col, y_col, now_col = EVENTS[event]
+    te = te.copy()
+    te["p_rate"] = rate(te)
+    te["p_cal"] = cal(te.p_direct.values)
+    head = te[te[now_col] == 0]
+    res = {"headline": compare(head, ["p_rate", "p_direct", "p_cal"], y_col,
+                               baselines=["p_rate"], forecasters=["p_direct", "p_cal"]),
+           "all": compare(te, ["p_persist", "p_rate", "p_direct", "p_cal"], y_col,
+                          baselines=["p_persist", "p_rate"], forecasters=["p_direct", "p_cal"]),
+           "calibration": {"p_direct": av.calibration_table(head.p_direct, head[y_col]),
+                           "p_cal": av.calibration_table(head.p_cal, head[y_col]),
+                           "p_rate": av.calibration_table(head.p_rate, head[y_col])},
+           "by_start": {}, "by_hour_block": {}}
+    for a, b in START_SLICES:
+        s = head[head[count_col].between(a, b)]
+        if len(s):
+            res["by_start"][f"{a}-{b if b < 10_000 else '+'}"] = compare(
+                s, ["p_rate", "p_cal"], y_col, baselines=["p_rate"], forecasters=["p_cal"])
+    for a, b, name in HOUR_BLOCKS:
+        s = head[head.local_hour.between(a, b)]
+        if len(s):
+            res["by_hour_block"][name] = compare(s, ["p_rate", "p_cal"], y_col, baselines=["p_rate"],
+                                                 forecasters=["p_cal"])
+    return res
+
+
+def load_states(frames):
+    """Match feed stations to ours and take one count per station per hour mark."""
+    stations = pd.read_parquet(INTERIM / "stations.parquet")
+    top = pd.read_csv(PROCESSED / "top_stations.csv")
+    ours = stations[stations.station_id.isin(top.station_id)].reset_index(drop=True)
+    snap = match_months(frames, ours)
+    states, n_marks, n_ok = station_states(snap)
+    return states, {"matched_stations": int(snap.our_id.nunique()), "of_stations": int(len(ours)),
+                    "hour_marks": n_marks, "hour_marks_with_snapshot": n_ok}
+
+
 def truck_effect(d):
     """Real change in bikes at the station (available + disabled) against the trip-based net flow, same window.
     Uses every matched window, May to September; nothing here is fitted."""
@@ -156,38 +214,14 @@ def main():
          "hour_marks_with_snapshot": n_marks_ok, "counts": counts, "events": {}}
 
     for event, (count_col, y_col, now_col) in EVENTS.items():
-        e = d[in_service(d, event)].copy()
-        direct = av.prob_empty_direct if event == "empty" else av.prob_full_direct
-        e["p_direct"] = direct(e[count_col], e.l2, e.l2_lo, e.l2_hi)
-        e["p_persist"] = e[now_col].astype(float)
+        e = event_windows(d, event)
         train, test = e[e.month.isin(TRAIN_MONTHS)], e[e.month.isin(TEST_MONTHS)]
         R["events"][event] = {"windows_in_service": int(len(e)), "train_rows": int(len(train)), "test_rows": int(len(test)),
                               "horizons": {}}
         for h in HORIZONS:
-            tr, te = train[train.h == h].copy(), test[test.h == h].copy()
-            rate = av.rate_table(tr, count_col, y_col)                    # learned on training months only
-            te["p_rate"] = rate(te)
-            cal_fit = tr[tr[now_col] == 0]                                # recalibrate on the headline population
-            te["p_cal"] = av.recalibrate(cal_fit.p_direct.values, cal_fit[y_col].values)(te.p_direct.values)
-            head = te[te[now_col] == 0]
-            res = {"headline": compare(head, ["p_rate", "p_direct", "p_cal"], y_col,
-                                       baselines=["p_rate"], forecasters=["p_direct", "p_cal"]),
-                   "all": compare(te, ["p_persist", "p_rate", "p_direct", "p_cal"], y_col,
-                                  baselines=["p_persist", "p_rate"], forecasters=["p_direct", "p_cal"]),
-                   "calibration": {"p_direct": av.calibration_table(head.p_direct, head[y_col]),
-                                   "p_cal": av.calibration_table(head.p_cal, head[y_col]),
-                                   "p_rate": av.calibration_table(head.p_rate, head[y_col])},
-                   "by_start": {}, "by_hour_block": {}}
-            for a, b in START_SLICES:
-                s = head[head[count_col].between(a, b)]
-                if len(s):
-                    res["by_start"][f"{a}-{b if b < 10_000 else '+'}"] = compare(
-                        s, ["p_rate", "p_cal"], y_col, baselines=["p_rate"], forecasters=["p_cal"])
-            for a, b, name in HOUR_BLOCKS:
-                s = head[head.local_hour.between(a, b)]
-                if len(s):
-                    res["by_hour_block"][name] = compare(s, ["p_rate", "p_cal"], y_col, baselines=["p_rate"],
-                                                         forecasters=["p_cal"])
+            tr, te = train[train.h == h], test[test.h == h]
+            rate, cal = fit_event(tr, event)                              # learned on training months only
+            res = score_event(te, event, rate, cal)
             R["events"][event]["horizons"][str(h)] = res
             hb = res["headline"]
             print(f"{event:5s} {h}h  test n={hb['n']:,} rate={hb['event_rate']:.3f}  Brier rate={hb['brier']['p_rate'][0]:.4f} "

@@ -459,3 +459,34 @@ Each row refits the forecast model with one change and scores it like section 1 
 | 6 h | two flows | 19.72 | +6.6% (+5.9 to +7.2) | worse |
 
 Level 2's own miss: 1 h 9.41; 3 h 13.91; 6 h 18.50. A positive change means the variant misses more (worse).
+
+## 15. Sealed confirmation: September 2024
+
+Sections 12 and 13 were built and read on summer 2025. Here both are rerun, unchanged and **once**, on a month nobody had looked at: September 2024, under a plan written before its snapshots were downloaded (plan/07-sealed-confirmation-sept-2024.md). Nothing is fitted on it: the starting-count table and the recalibrations are the ones fitted on May to July 2025. Level 2 never trained on 2024. 88 of 100 stations match; 2,691 snapshots on 30 days; 146,822 forecast windows with a count at both ends.
+
+Written down before the run: confirmed if, at 3 h, (1) stock + forecast and stock only are both clearly above forecast size, and (2) the calibrated chance is not worse than the starting-count rate, for empty and for full.
+
+**Result: confirmed.** Ranking order: holds; empty/full skill: holds.
+
+### Which stations should a truck go to? (as section 13)
+
+| Horizon | Forecast size | Stock only | Stock + forecast | Random | Stock + forecast minus stock only | Aug–Sep 2025 (size / stock / both) |
+|---|---|---|---|---|---|---|
+| 1 h | 7.6% (6.7 to 8.5) | 31.5% (29.2 to 33.6) | 32.2% (30.1 to 34.3) | 9.7% | +0.7 pts (-0.1 to +1.6), tie | 7.4% / 32.2% / 33.2% |
+| 3 h | 9.1% (7.6 to 10.6) | 20.0% (17.6 to 22.5) | 20.7% (18.2 to 23.1) | 9.4% | +0.7 pts (-1.3 to +2.6), tie | 9.3% / 20.2% / 20.7% |
+| 6 h | 13.3% (10.7 to 15.9) | 15.6% (13.2 to 18.2) | 16.3% (13.8 to 18.9) | 9.8% | +0.7 pts (-1.1 to +2.5), tie | 12.1% / 14.2% / 14.7% |
+
+### Will the station be empty or full? (as section 12, stations not already empty or full)
+
+| Event | Horizon | Windows | Happened | Calibrated vs starting-count rate (skill) | Verdict | Aug–Sep 2025 skill |
+|---|---|---|---|---|---|---|
+| empty | 1 h | 48,793 | 3.7% | +2.7% (+1.7 to +3.6) | better | -0.3% (-0.9 to +0.3) |
+| empty | 3 h | 44,679 | 4.5% | +3.6% (+2.6 to +4.6) | better | +1.1% (+0.3 to +1.7) |
+| empty | 6 h | 44,357 | 5.3% | +2.9% (+2.0 to +3.7) | better | +2.4% (+1.7 to +3.0) |
+| full | 1 h | 49,652 | 2.4% | -0.4% (-1.4 to +0.6) | tie | +0.7% (+0.1 to +1.3) |
+| full | 3 h | 45,516 | 3.0% | +1.7% (+0.7 to +2.7) | better | +1.7% (+1.1 to +2.2) |
+| full | 6 h | 45,271 | 3.6% | +3.0% (+2.2 to +3.9) | better | +2.3% (+1.7 to +2.8) |
+
+The direct reading is still far too sure: in its top bin (mean stated 94%) the station was empty 26% of the time (empty, 3 h). Truck effect, as in section 12: correlation between the real change in bikes and trip net flow 0.51 at 1 h, 0.53 at 3 h, 0.52 at 6 h.
+
+What did not repeat: in 2025, stock + forecast beat stock only at 1 h; on September 2024 it is a tie at every horizon. The forecast's extra over the stock count is within the noise. At 1 h the empty and full skills also swap between the two periods (each is better in one and a tie in the other), so 1 h is the least stable horizon; 3 h and 6 h hold in both.

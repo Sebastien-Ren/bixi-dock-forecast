@@ -18,7 +18,7 @@ The trip files are about 10 GB, so they are not in git. Put them in `data/raw/` 
 
 3. **Weather.** Downloaded automatically by `src/s03_weather.py` from [Open-Meteo](https://open-meteo.com) (no key needed) and cached in `data/interim/weather_cache/`. The first run makes about 900 requests and needs internet.
 
-4. **Past station counts (optional).** Snapshots of BIXI's station feed for May to September 2025, from [Max Halford's bike-sharing-history](https://github.com/MaxHalford/bike-sharing-history). `src/archive/build_inventory.py` keeps a partial clone in `data/raw/halford_montreal.git` (about 260 MB) and writes one table per month to `data/interim/` (about 110 MB in total). Needed only for the empty/full and truck-ranking checks and the map's 2025 week; see the main README for the command.
+4. **Past station counts (optional).** Snapshots of BIXI's station feed for May to September 2025, plus September 2024 for the sealed confirmation, from [Max Halford's bike-sharing-history](https://github.com/MaxHalford/bike-sharing-history). `src/archive/build_inventory.py` keeps a partial clone in `data/raw/halford_montreal.git` (about 260 MB) and writes one table per month to `data/interim/` (about 110 MB in total). Needed only for the empty/full and truck-ranking checks and the map's 2025 week; see the main README for the command.
 
 ## What the pipeline writes
 

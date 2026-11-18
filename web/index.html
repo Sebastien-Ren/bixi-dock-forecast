@@ -855,7 +855,11 @@ function drawStock() {
     $("stock-d").textContent = `Share of 10 picks that really were empty or full ${state.h} h later. Picking by forecast size is ${D.precision.size[0] < D.precision.random[0] * 1.15 ? "about as good as" : "barely better than"} random; ` +
       `picking the stations closest to empty or full now is far better, and the forecast adds ${D.both_vs_stock_verdict === "better" ? "a little more" : "a little, within the noise at this look-ahead"}.` + (DATA.meta.has_stock ? " This week, tab 1 uses the stock + forecast ranking." : " Switch to the 2025 week to see that ranking on the map.");
   }
-  $("stock-note").textContent = `Scored on August and September 2025, ${A.matched} stations, stations not already empty or full. Past data, not a live test.`;
+  const C = DATA.findings.confirmation, cd = C && C.decision[h];
+  $("stock-note").textContent = `Scored on August and September 2025, ${A.matched} stations, stations not already empty or full. Past data, not a live test.` +
+    (C && C.confirmed ? ` Confirmed on a month kept aside, September 2024, run once with nothing refitted: the corrected chance still beats knowing only the count now ` +
+      `(${sg(C.skill[h].empty[0])} empty, ${sg(C.skill[h].full[0])} full), and the rankings keep their order: stock + forecast ${Math.round(cd.precision.both[0] * 100)}%, ` +
+      `stock only ${Math.round(cd.precision.stock[0] * 100)}%, forecast size ${Math.round(cd.precision.size[0] * 100)}%, random ${Math.round(cd.precision.random[0] * 100)}%.` : "");
 }
 
 /* ---------- left column ---------- */

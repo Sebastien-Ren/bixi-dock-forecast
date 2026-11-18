@@ -69,6 +69,8 @@
 
   .example { border-left: 2px solid var(--ink); padding: 2px 0 2px 16px; color: var(--ink-2); font-size: 16px; }
   .example b { color: var(--ink); font-weight: 600; }
+  .confirm { border-left: 2px solid var(--rule); padding: 2px 0 2px 16px; color: var(--ink-2); font-size: 16px; }
+  .confirm b { color: var(--ink); font-weight: 600; }
   footer { margin-top: 104px; font-size: 13.5px; color: var(--ink-3); text-align: center; line-height: 1.6; }
 
   @media (max-width: 640px) {
@@ -92,7 +94,7 @@
 
 <div class="label">00/ Abstract</div>
 <div class="abstract">
-  <p>A bike-share station never shuts down, but it can turn riders away: empty, with no bike to take, or full, with no dock to return one to. We forecast net flow, arrivals minus departures, at Montreal's 100 busiest BIXI stations over the next 1, 3 and 6 hours, with an 80% range. A gradient-boosting model with quantile outputs is trained on summers 2022 and 2023 and tested on every hour of 2024 to 2026, using weather forecasts as they were issued. It is scored on the windows that matter, against hard baselines, as a shortlist for a dispatcher, and, on real station counts from 2025, as a probability that a station will run empty. <span id="short-found"></span> To decide where trucks should go, how close a station is to empty or full right now matters far more than the size of its forecast; the forecast adds a little on top.</p>
+  <p>A bike-share station never shuts down, but it can turn riders away: empty, with no bike to take, or full, with no dock to return one to. We forecast net flow, arrivals minus departures, at Montreal's 100 busiest BIXI stations over the next 1, 3 and 6 hours, with an 80% range. A gradient-boosting model with quantile outputs is trained on summers 2022 and 2023 and tested on every hour of 2024 to 2026, using weather forecasts as they were issued. It is scored on the windows that matter, against hard baselines, as a shortlist for a dispatcher, and, on real station counts from 2025, as a probability that a station will run empty, with both station-count results rerun once on a sealed month from 2024. <span id="short-found"></span> To decide where trucks should go, how close a station is to empty or full right now matters far more than the size of its forecast; the forecast adds a little on top.</p>
 </div>
 
 <div class="label" id="question">01/ The problem</div>
@@ -115,7 +117,7 @@
   <li><b>Trips.</b> BIXI's public trip history, January 2022 to August 2026, 57.8 million trips. Counting them per station and hour gives arrivals and departures.</li>
   <li><b>Stations.</b> Trip files carry names and coordinates, not stable ids, and stations get renamed and moved. Two records are one station if they are within 25 m, or have the same name within 150 m. The 100 busiest are ranked on summer trips in 2022 and 2023.</li>
   <li><b>Weather.</b> ECMWF forecast runs as issued, via Open-Meteo, for one downtown point. A run is used only 8 hours after it started, roughly when it would have been available.</li>
-  <li><b>Station counts.</b> For section 11 only: snapshots of BIXI's live station feed (bikes, free docks, capacity), saved about every 15 minutes by a public archive, May to September 2025.</li>
+  <li><b>Station counts.</b> For sections 11 and 12 only: snapshots of BIXI's live station feed (bikes, free docks, capacity), saved about every 15 minutes by a public archive, May to September 2025, plus September 2024 kept aside as a sealed confirmation.</li>
 </ul>
 <p class="muted">Summer is May to September. Every input for hour <i>t</i> uses only data from before <i>t</i>.</p>
 
@@ -180,7 +182,8 @@
   <li><b>Weather as forecast.</b> Using observed weather would be cheating; scored both ways, honesty costs at most 0.04 bikes.</li>
   <li><b>Leakage tests.</b> Automated tests rewrite every hour after <i>t</i> and check that no input for hour <i>t</i> moves.</li>
   <li><b>Never retrained.</b> The map's model was fitted once; refitting each year is scored separately below.</li>
-  <li><b>Pre-registration.</b> For sections 10 and 11, questions, baselines and the rule for "better" were written down before any result was seen.</li>
+  <li><b>Pre-registration.</b> For sections 10 to 12, questions, baselines and the rule for "better" were written down before any result was seen.</li>
+  <li><b>A sealed confirmation.</b> The station-count results (sections 11 and 12) were confirmed on a month kept aside, September 2024: run once, with nothing refitted, under a plan written before its data was downloaded, including what would count as confirmed.</li>
 </ul>
 
 <div class="label" id="results">09/ Results</div>
@@ -229,6 +232,7 @@
   <svg id="fig-cal" viewBox="0 0 700 330" role="img" aria-label="Stated chance against how often the station was empty"></svg>
   <figcaption id="cal-cap"></figcaption>
 </figure>
+<p class="confirm" id="conf-emp" hidden></p>
 <h3>The truck effect</h3>
 <p>The model learned from trips, and trips do not include BIXI's trucks moving bikes. Comparing the real change in bikes at each station with the trip count for the same window measures what trips miss, and explains why the raw probability above is too sure.</p>
 <p class="example" id="ex-limit"></p>
@@ -253,6 +257,7 @@
   <svg id="fig-trk" viewBox="0 0 700 200" role="img" aria-label="Share of picks that really ended empty or full, by ranking"></svg>
   <figcaption id="trk-cap"></figcaption>
 </figure>
+<p class="confirm" id="conf-trk" hidden></p>
 <p>BIXI's own rule is not scored. These counts already include what its trucks did while following that rule, so the stations it sent trucks to look fixed; scoring it here would be unfair. Comparing against it properly needs BIXI's truck logs, which is the natural next step for this project.</p>
 </section>
 
@@ -263,8 +268,8 @@
   <li><b>No event calendar.</b> The worst misses are festivals and matches.</li>
   <li><b>It ages</b> when never retrained (section 09).</li>
   <li><b>A changing network.</b> 85 of the 100 stations were in service in 2026.</li>
-  <li><b>One summer of real counts</b>: 61 test days, 91 stations, July 2025 half missing from the archive.</li>
-  <li><b>The test is a promise.</b> Results were read once and nothing was tuned afterwards, but there is no locked final set of dates.</li>
+  <li><b>About 90 days of real counts</b>, in two separate periods: August and September 2025 (61 test days, 91 stations) and September 2024 (30 days, 88 stations).</li>
+  <li><b>No sealed dates for the trip-based results</b> (sections 09 and 10, 2024 to 2026): they were read once and nothing was tuned afterwards.</li>
 </ul>
 
 <footer>
@@ -526,8 +531,27 @@ function drawTrucks() {
     `${D.both_vs_stock_verdict === "better" ? "a small but real gain" : "within the noise at this look-ahead"}.`;
 }
 
+function drawConfirm() {
+  const C = F.confirmation;
+  if (!C) return;
+  const h = String(state.h), lead = `<b>Sealed confirmation, September 2024.</b> Rerun once on a month kept aside, with the 2025 fits and nothing refitted`;
+  const iv = (x) => `<b>${sgn(x[0])}%</b> (${sgn(x[1])} to ${sgn(x[2])})`;
+  const sk = C.skill[h], ref = A && A.by_h[h];
+  const verdict = C.confirmed ? "" : " <b>The pre-registered test was not met.</b>";
+  $("conf-emp").innerHTML = `${lead}: at ${h} h the calibrated chance beats the baseline by ${iv(sk.empty)} for empty and ${iv(sk.full)} for full` +
+    (ref ? ` (2025: ${sgn(ref.empty.skill[0])}% and ${sgn(ref.full.skill[0])}%)` : "") +
+    `. The raw reading is still too sure (says ${pct(C.direct_top[0])}, empty ${pct(C.direct_top[1])} of the time), and real stock and trips correlate only ${C.truck[h].toFixed(2)}.${verdict}`;
+  $("conf-emp").hidden = false;
+  const D = C.decision[h], P = D.precision, d = D.both_vs_stock;
+  const ds = F.decision_study, lost1 = ds && ds.by_h["1"].both_vs_stock_verdict === "better" && C.decision["1"].both_vs_stock_verdict !== "better";
+  $("conf-trk").innerHTML = `${lead}: the same order. Stock + forecast ${pct(P.both[0], 1)}, stock only ${pct(P.stock[0], 1)}, forecast size ${pct(P.size[0], 1)}, random ${pct(P.random[0], 1)}. ` +
+    `Adding the forecast to the stock: ${sgn(d[0])} points (${sgn(d[1])} to ${sgn(d[2])}), ${D.both_vs_stock_verdict === "better" ? "a small but real gain" : "within the noise"}` +
+    (lost1 ? `; the small 1-hour gain seen in 2025 did not repeat` : "") + `.${verdict}`;
+  $("conf-trk").hidden = false;
+}
+
 function drawAll() {
-  drawShort(); drawExample(); drawBase(); drawModelStudy(); drawCov(); drawRetrain(); drawDec(); drawEmpty(); drawTrucks();
+  drawShort(); drawExample(); drawBase(); drawModelStudy(); drawCov(); drawRetrain(); drawDec(); drawEmpty(); drawTrucks(); drawConfirm();
 }
 
 drawPipeline(); drawTimeline(); drawImp(); drawAll();

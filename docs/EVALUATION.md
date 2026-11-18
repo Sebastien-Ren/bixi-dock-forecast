@@ -54,7 +54,8 @@ The baseline to beat knows the real count but has no forecast: how often a stati
 - **Read straight from the model's range, the probability is far too sure.** When it says 90%, the station is empty about 20% of the time, and it scores far worse than the baseline. Recalibrated, it is honest but rarely says more than 30%.
 - **Why: the truck effect, measured.** Over 3 hours, the real change in bikes at a station (available plus disabled) and the trip-based net flow correlate 0.47 (0.49 at 1 hour, 0.47 at 6). They differ by 2.5, 5.4 and 10.2 bikes on average at 1, 3 and 6 hours, against average trip net flows of 3.3, 7.5 and 13.9, and by 5 or more bikes in a quarter of 3-hour windows. The gap is largest in the morning and evening rush. Timing was checked: the match peaks at zero offset and vanishes an hour either way. So a station the trips say will lose 30 bikes often does not empty: a truck refills it.
 - **"Same as now" is a poor baseline here**: stations that are empty usually do not stay empty, so the forecast removes 34% to 51% of its error. The starting-count baseline is the honest one.
-- **Caveats.** One summer, 61 test days. July 2025 is half missing from the archive. Snapshots are matched to the hour within 10 minutes. 9 of the 100 stations do not match.
+- **Confirmed on a sealed month.** The same test, run once on September 2024 with the parts fitted on May to July 2025 and nothing refitted, under a plan written before that month was downloaded: skill at 3 hours +3.6% (+2.6 to +4.6) for empty and +1.7% (+0.7 to +2.7) for full; at 6 hours +2.9% and +3.0%. At 1 hour the two swap (empty better, full a tie), so 1 hour is the least stable look-ahead. The raw reading is still far too sure (says 94%, empty 26% of the time), and the truck-effect correlation is 0.51 to 0.53. Every table: [reports/RESULTS.md](../reports/RESULTS.md) section 15.
+- **Caveats.** About 90 days of real counts in two periods (61 test days in 2025, 30 in September 2024). July 2025 is half missing from the archive. Snapshots are matched to the hour within 10 minutes. 9 of the 100 stations do not match.
 
 ## Which stations a truck should check
 
@@ -67,7 +68,8 @@ On the 2025 counts, at each decision time, three rankings pick 10 stations; a pi
 | 6 hours | 12.1% | 14.2% | 14.7% | 10.0% | +0.5 points (-1.4 to 2.4), tie |
 
 - The map's shortlist (biggest forecast) is good at finding big moves (section above) but no better than random at finding stations that will be empty or full: a station with many docks can lose 30 bikes and be fine.
-- Stock now is what matters; the forecast adds a little on top, clearly only at 1 hour.
+- Stock now is what matters; the forecast adds a little on top, clearly only at 1 hour in 2025.
+- **Confirmed on September 2024** (sealed, run once, nothing refitted): forecast size 7.6% / 9.1% / 13.3%, stock only 31.5% / 20.0% / 15.6%, stock + forecast 32.2% / 20.7% / 16.3%, random about 10%. The order holds at every look-ahead. The 1-hour gain of stock + forecast over stock only did not repeat: +0.7 points (-0.1 to 1.6), a tie, so the forecast's extra over the stock count is best called within the noise.
 - BIXI's rule (mostly location-based, per Silva, Aloise and Jena, Omega 2024) is not scored: the counts include what its trucks did under it. A fair comparison needs BIXI's truck logs.
 
 ## What the model needs
@@ -99,4 +101,4 @@ Seasonal memory carries the model. Neighbours add almost nothing and two flows a
 - Net flow here is built from trips. Trucks moving bikes and bikes pulled for repair are not trips, so this is not the real change in docked bikes. Measured on summer 2025, the two correlate only about 0.47 (see above).
 - The network changes. Of the 100 stations ranked on 2022 and 2023, 94 were in service in summer 2024, 91 in 2025 and 85 in 2026. Stations that closed or moved more than a block get no forecast.
 - The map shows the never-retrained model. The retrained copy is scored on the method page (results section) but does not draw the circles.
-- The trip-based backtest has no sealed set of dates: it was read once and nothing was tuned afterwards. For the checks on real station counts, a sealed one-time confirmation on September 2024 is planned.
+- The trip-based backtest (2024 to 2026) has no sealed set of dates: it was read once and nothing was tuned afterwards. The checks on real station counts were confirmed on a sealed month, September 2024, run once under a plan written before its data was downloaded.

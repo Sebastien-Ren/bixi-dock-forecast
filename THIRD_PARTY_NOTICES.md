@@ -9,7 +9,7 @@ This project's own code is under the [MIT License](LICENSE). It uses the data an
 | BIXI Montréal, "Historique des déplacements" (<https://bixi.com/en/open-data/>) | Trip history, 2022 to August 2026 | Open-data attribution licence. Attribute BIXI Montréal. The raw files are not redistributed here. |
 | [Open-Meteo](https://open-meteo.com), ECMWF IFS | Actual weather and archived forecast runs | CC BY 4.0. The free API is for non-commercial use. |
 | BIXI live station list (GBFS) | Dock counts shown as context; the hidden live view | Published by BIXI as open data. |
-| Past snapshots of BIXI's station feed, from [Max Halford's bike-sharing-history](https://github.com/MaxHalford/bike-sharing-history) | Real station counts, May to September 2025, for the empty/full and truck-ranking checks | BIXI open data (attribute BIXI Montréal); archive by Max Halford. Raw snapshots are not redistributed; the map's 2025 week file contains derived counts for 85 stations. |
+| Past snapshots of BIXI's station feed, from [Max Halford's bike-sharing-history](https://github.com/MaxHalford/bike-sharing-history) | Real station counts, May to September 2025 and September 2024 (sealed confirmation), for the empty/full and truck-ranking checks | BIXI open data (attribute BIXI Montréal); archive by Max Halford. Raw snapshots are not redistributed; the map's 2025 week file contains derived counts for 85 stations. |
 | [OpenFreeMap](https://openfreemap.org), OpenMapTiles, OpenStreetMap | Basemap on the map page | Loaded online at view time. Attribution is shown on the map: OpenFreeMap, © OpenMapTiles, data from OpenStreetMap (ODbL). |
 | Instrument Sans (Google Fonts) | Font on the map and method pages | SIL Open Font License. Loaded online at view time. |
 
